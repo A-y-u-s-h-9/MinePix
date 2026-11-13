@@ -21,10 +21,10 @@
             <GradientStop Color="#14FFFFFF" Offset="0.22"/>
             <GradientStop Color="#00FFFFFF" Offset="0.45"/>
         </LinearGradientBrush>
-        <!-- Bright top-left rim fading to nothing -->
+        <!-- Softer, even rim -->
         <LinearGradientBrush x:Key="RimBrush" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#5CFFFFFF" Offset="0"/>
-            <GradientStop Color="#1FFFFFFF" Offset="0.5"/>
+            <GradientStop Color="#2EFFFFFF" Offset="0"/>
+            <GradientStop Color="#14FFFFFF" Offset="0.5"/>
             <GradientStop Color="#0AFFFFFF" Offset="1"/>
         </LinearGradientBrush>
     </Window.Resources>
@@ -36,7 +36,7 @@
             BorderThickness="1,0,1,1"
             Padding="16,0">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="18" ShadowDepth="2" Direction="270" Color="#001018" Opacity="0.55"/>
+            <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
         </Border.Effect>
         <Grid>
             <!-- glass layers: sheen on top of everything else -->
