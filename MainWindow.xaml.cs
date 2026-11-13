@@ -319,6 +319,9 @@ public partial class MainWindow : Window
         return Math.Clamp(1.0 - (p.Y / track.ActualHeight), 0, 1);
     }
 
+    private static System.Windows.Media.Brush Brush(string hex) =>
+        new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex)!);
+
     private async Task RefreshControlsAsync()
     {
         try
@@ -353,10 +356,22 @@ public partial class MainWindow : Window
             _radios = await RadioService.GetRadiosAsync();
             WifiToggle.IsEnabled = _radios.Wifi is not null;
             BluetoothToggle.IsEnabled = _radios.Bluetooth is not null;
-            WifiToggle.Opacity = _radios.Wifi is not null ? 1 : 0.4;
-            BluetoothToggle.Opacity = _radios.Bluetooth is not null ? 1 : 0.4;
+            WifiToggle.Opacity = _radios.Wifi is not null ? 1 : 0.45;
+            BluetoothToggle.Opacity = _radios.Bluetooth is not null ? 1 : 0.45;
             WifiToggle.IsChecked = _radios.Wifi is not null && RadioService.IsOn(_radios.Wifi);
             BluetoothToggle.IsChecked = _radios.Bluetooth is not null && RadioService.IsOn(_radios.Bluetooth);
+
+            var wifiOn = WifiToggle.IsChecked == true;
+            var btOn = BluetoothToggle.IsChecked == true;
+            WifiCaption.Text = wifiOn ? (RadioService.WifiName() ?? "Wi-Fi") : "Wi-Fi";
+            WifiCaption.Foreground = Brush(wifiOn ? "#F5F5F7" : "#8E8E93");
+            WifiSubCaption.Text = wifiOn ? "Connected" : "Off";
+            WifiSubCaption.Foreground = Brush(wifiOn ? "#8AB4FF" : "#6E6E73");
+
+            BluetoothCaption.Text = "Bluetooth";
+            BluetoothCaption.Foreground = Brush(btOn ? "#F5F5F7" : "#8E8E93");
+            BluetoothSubCaption.Text = btOn ? "On" : "Off";
+            BluetoothSubCaption.Foreground = Brush(btOn ? "#8AB4FF" : "#6E6E73");
         }
         catch
         {

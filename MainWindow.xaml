@@ -24,10 +24,10 @@
             <Setter Property="Padding" Value="12"/>
         </Style>
 
-        <!-- big iOS circle toggle: ON = accent, OFF = graphite -->
+        <!-- colourless circle toggle: only the glyph colors when active -->
         <Style x:Key="IslandCircleToggle" TargetType="ToggleButton">
             <Setter Property="Background" Value="#1FFFFFFF"/>
-            <Setter Property="Foreground" Value="#F5F5F7"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
             <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -40,17 +40,13 @@
                             <Border Background="{TemplateBinding Background}" CornerRadius="28" Width="56" Height="56">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock x:Name="Label" Text="{TemplateBinding Tag}" Foreground="#D5D5DA"
-                                       FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center"
-                                       Margin="0,6,0,0"/>
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Background" Value="#8AB4FF"/>
-                                <Setter Property="Foreground" Value="#0D1B2A"/>
+                                <Setter Property="Foreground" Value="#8AB4FF"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Opacity" Value="0.9"/>
+                                <Setter Property="Background" Value="#26FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -58,30 +54,22 @@
             </Setter>
         </Style>
 
-        <!-- disabled "soon" circle -->
-        <Style x:Key="IslandCircleSoon" TargetType="Button">
-            <Setter Property="Background" Value="#10FFFFFF"/>
-            <Setter Property="Foreground" Value="#6E6E73"/>
-            <Setter Property="FontFamily" Value="Segoe UI Symbol"/>
-            <Setter Property="FontSize" Value="22"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="4"/>
-            <Setter Property="ToolTip" Value="Coming soon — no public API on this Windows build"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="28" Width="56" Height="56">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <TextBlock Text="{TemplateBinding Tag}" Foreground="#8E8E93"
-                                       FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center"
-                                       Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="IslandCaption" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#D5D5DA"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="MaxWidth" Value="72"/>
+        </Style>
+
+        <Style x:Key="IslandCaptionSub" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="MaxWidth" Value="72"/>
         </Style>
 
         <Style TargetType="ScrollBar">
@@ -535,7 +523,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- volume slider tile -->
-                    <Border Grid.Column="0" Margin="2,0,1,0" Style="{StaticResource IslandMasterTile}" x:Name="VolumeTile">
+                    <Border Grid.Column="0" Margin="1,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="VolumeTile">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -558,7 +546,7 @@
                     </Border>
 
                     <!-- brightness slider tile -->
-                    <Border Grid.Column="1" Margin="1,0,1,0" Style="{StaticResource IslandMasterTile}" x:Name="BrightnessTile">
+                    <Border Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="BrightnessTile">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -583,26 +571,26 @@
                         </Grid>
                     </Border>
 
-                    <!-- circle grid -->
-                    <Border Grid.Column="2" Margin="1,0,2,0" Style="{StaticResource IslandMasterTile}">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                    <!-- circle grid: colourless circles + state captions -->
+                    <Border Grid.Column="2" Margin="0,0,1,0" Style="{StaticResource IslandMasterTile}">
+                        <Grid VerticalAlignment="Center">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <ToggleButton x:Name="WifiToggle" Grid.Row="0" Grid.Column="0" Content="Wi-Fi"
-                                          Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"/>
-                            <ToggleButton x:Name="BluetoothToggle" Grid.Row="0" Grid.Column="1" Content="BT"
-                                          Style="{StaticResource IslandCircleToggle}" Click="BluetoothToggle_Click"
-                                          FontFamily="Segoe UI Semibold" FontSize="18"/>
-                            <Button Grid.Row="1" Grid.Column="0" Content="&#x2708;" Tag="Soon"
-                                    Style="{StaticResource IslandCircleSoon}"/>
-                            <Button Grid.Row="1" Grid.Column="1" Content="&#x263E;" Tag="Soon"
-                                    Style="{StaticResource IslandCircleSoon}"/>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <ToggleButton x:Name="WifiToggle" Content="Wi-Fi"
+                                              Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"/>
+                                <TextBlock x:Name="WifiCaption" Text="Wi-Fi" Style="{StaticResource IslandCaption}" Margin="0,6,0,0"/>
+                                <TextBlock x:Name="WifiSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <ToggleButton x:Name="BluetoothToggle" Content="BT"
+                                              Style="{StaticResource IslandCircleToggle}" Click="BluetoothToggle_Click"
+                                              FontFamily="Segoe UI Semibold" FontSize="18"/>
+                                <TextBlock x:Name="BluetoothCaption" Text="Bluetooth" Style="{StaticResource IslandCaption}" Margin="0,6,0,0"/>
+                                <TextBlock x:Name="BluetoothSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </Grid>

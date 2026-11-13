@@ -1,4 +1,5 @@
 using Windows.Devices.Radios;
+using Windows.Networking.Connectivity;
 
 namespace MinePix;
 
@@ -50,6 +51,21 @@ internal static class RadioService
         catch
         {
             return false;
+        }
+    }
+
+    /// <summary>Name of the active Wi-Fi network (SSID), or null if not on one.</summary>
+    public static string? WifiName()
+    {
+        try
+        {
+            var profile = NetworkInformation.GetInternetConnectionProfile();
+            if (profile is null || !profile.IsWlanConnectionProfile) return null;
+            return string.IsNullOrWhiteSpace(profile.ProfileName) ? null : profile.ProfileName;
+        }
+        catch
+        {
+            return null;
         }
     }
 }
