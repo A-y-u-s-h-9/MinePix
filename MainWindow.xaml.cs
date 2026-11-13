@@ -85,9 +85,9 @@ public partial class MainWindow : Window
     {
         var border = _settings.Theme?.ToLowerInvariant() switch
         {
-            "glass" => "#3D2B3344",
-            "black" => "#BF100F11",
-            _ => "#591E1D23", // graphite
+            "glass" => "#66141A1F", // glass — 60% opaque dark, content stays readable
+            "black" => "#F2100F11", // black — solid
+            _ => "#E6111015",        // graphite — ~90% opaque, near-solid dark surface
         };
         Island.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));
     }

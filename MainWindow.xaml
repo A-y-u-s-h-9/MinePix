@@ -23,9 +23,9 @@
 
         <!-- page tile used everywhere: near-opaque dark rounded tile -->
         <Style x:Key="Tile" TargetType="Border">
-            <Setter Property="Background" Value="#AD1E2026"/>
+            <Setter Property="Background" Value="#D9202024"/>
             <Setter Property="CornerRadius" Value="20"/>
-            <Setter Property="BorderBrush" Value="#08FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#0FFFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="14"/>
         </Style>
