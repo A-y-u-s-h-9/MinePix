@@ -35,18 +35,18 @@ internal static class BrightnessService
         try
         {
             level = Math.Clamp(level, 0, 100);
-            var methodClass = new ManagementClass("root\\WMI", "WmiMonitorBrightnessMethods", null);
-            using var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT InstanceName FROM WmiMonitorBrightness");
-            foreach (ManagementObject monitor in searcher.Get())
+            using var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM WmiMonitorBrightnessMethods");
+            int setCount = 0;
+            foreach (ManagementObject methods in searcher.Get())
             {
-                using var methods = new ManagementClass("root\\WMI", "WmiMonitorBrightnessMethods", null);
                 using var inParams = methods.GetMethodParameters("WmiSetBrightness");
                 inParams["Brightness"] = Convert.ToByte(level);
                 inParams["Timeout"] = Convert.ToUInt32(0);
-                using var result = monitor.InvokeMethod("WmiSetBrightness", inParams, null);
-                IsSupported = true;
+                methods.InvokeMethod("WmiSetBrightness", inParams, null);
+                setCount++;
             }
-            return true;
+            IsSupported = setCount > 0;
+            return setCount > 0;
         }
         catch
         {
