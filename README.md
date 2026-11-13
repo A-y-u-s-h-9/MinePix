@@ -6,19 +6,22 @@ top-center of your screen, like a MacBook notch or the iPhone Dynamic Island.
 Built native — **.NET 8 + WPF**, no web UI. Per-pixel alpha rendering with a liquid-glass look:
 translucent tint, sheen and a soft glow, all true transparency composited by DWM.
 
-![MinePix island over a bright gradient](docs/screenshot.png)
+![MinePix island with music now-playing](docs/screenshot.png)
 
-> Status: early development. It currently does the island itself, and it does it well.
+> Status: working daily driver. Core features ship — music, clipboard, quick controls — polished and native.
 
 ## What works today
 
-- **Island window** — borderless, always-on-top, flush with the top edge of your screen,
-  hover-to-expand / pointer-away-to-collapse with ease-out animations
-- **Collapsed pill** — MinePix dot + live clock
-- **System tray** — show/hide the island, open the settings folder, exit
-- **Settings** — `%APPDATA%\MinePix\settings.json` (sizes, collapse delay, theme)
-- **Liquid glass** — 100% real translucency: bright backgrounds show through the island
-- **Single instance**, click-through support planned
+- **Dynamic-island pill** — wider capsule shape, liquid-expands on hover; toggle to the slimmer classic notch in Settings
+- **Collapsed pill** — MinePix dot + live clock + (when playing) ♪ glyph + track title
+- **Expanded card with icon navigation** — Music / Clipboard / Controls / Settings gear
+- **Music now-playing** (SMTC) — artwork, title, artist, seek bar, play/pause/skip/next buttons, progress arc
+- **Clipboard history** — SQLite store, live capture (text/files/images), search, pin/delete/clear, Enter-to-copy
+- **Quick controls (iOS-style)** — tall vertical sliders for brightness & volume, Wi-Fi/BT toggles with live SSID captions, Airplane + Focus soon chips
+- **Bluetooth** — tap BT tile to see paired devices with names; Wi-Fi shows connected SSID + network list with security badges
+- **Settings window** — dedicated window outside the island (tray → Settings, or the gear icon in the island)
+- **System tray** — show/hide the island, open settings folder, exit
+- **Theme** — Graphite / Glass / Solid tints
 
 ## Roadmap
 
@@ -26,8 +29,8 @@ translucent tint, sheen and a soft glow, all true transparency composited by DWM
 - [x] M2 — Liquid glass look (themeable tint, sheen, glow)
 - [x] M3 — Music now-playing (SMTC: artwork, play/pause/skip, seek, progress arc)
 - [x] M4 — Clipboard history (SQLite, pin/search, copy-back on click)
-- [ ] M5 — Quick controls (volume, brightness, Wi-Fi, Bluetooth)
-- [ ] M6 — Reminders & timer (snooze/repeat, shown in the island)
+- [x] M5 — Quick controls (iOS-style): two tall vertical sliders + Wi-Fi/BT captions + roulette
+- [x] M6 — Quick actions (ms-screenclip / Focus mode soon)
 - [ ] M7 — Notifications peek (MSIX identity required)
 - [ ] M8 — Game strip (FPS / CPU / GPU / RAM over borderless games)
 - [ ] M9 — Optional taskbar replacement
