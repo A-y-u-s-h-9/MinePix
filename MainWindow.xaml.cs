@@ -83,6 +83,10 @@ public partial class MainWindow : Window
 
         InitTray();
 
+        // dev affordance: force-open the standalone settings window (for headless screenshots/tests)
+        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_SETTINGS") == "1")
+            Dispatcher.BeginInvoke(new Action(() => { var w = new SettingsWindow(_settings) { Owner = this }; w.Show(); }), DispatcherPriority.Loaded);
+
         // dev affordance: force the expanded card open (used for headless screenshots/tests)
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1")
             Dispatcher.BeginInvoke(new Action(Expand), DispatcherPriority.Loaded);
@@ -98,6 +102,32 @@ public partial class MainWindow : Window
     }
 
     private static double CenteredLeft(double width) => (SystemParameters.PrimaryScreenWidth - width) / 2;
+
+    /// <summary>
+    /// Called from the standalone settings window so the island reflects changes live.
+    /// Re-reads the shared Settings instance, applies theme, and re-syncs pill/size.
+    /// </summary>
+    public void RefreshFromSettings()
+    {
+        ApplyTheme();
+        _collapseTimer.Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs);
+
+        if (!_expanded)
+        {
+            Width = _settings.CollapsedWidth;
+            Height = _settings.CollapsedHeight;
+            Left = CenteredLeft(Width);
+        }
+        else
+        {
+            Width = _settings.ExpandedWidth;
+            Height = _settings.ExpandedHeight;
+            Left = CenteredLeft(Width);
+        }
+
+        // If the island-mode setting changes, the pill shape can change too; just re-theme here.
+        // The next hover-expansion will pick up the new width/height values anyway.
+    }
 
     /// <summary>
     /// Applies the configured theme: the island tint. The DWM blur/acrylic APIs were probed and
@@ -803,11 +833,12 @@ public partial class MainWindow : Window
         var toggleItem = new MenuItem { Header = "Show / hide island" };
         toggleItem.Click += (_, _) => ToggleIsland();
 
-        var settingsItem = new MenuItem { Header = "Open settings folder" };
+        var settingsItem = new MenuItem { Header = "Settings…" };
         settingsItem.Click += (_, _) =>
         {
-            System.IO.Directory.CreateDirectory(Settings.SettingsDir);
-            System.Diagnostics.Process.Start("explorer.exe", Settings.SettingsDir);
+            RefreshFromSettings();
+            var win = new SettingsWindow(_settings) { Owner = this };
+            win.Show();
         };
 
         var exitItem = new MenuItem { Header = "Exit MinePix" };

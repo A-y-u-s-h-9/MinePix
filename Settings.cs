@@ -10,6 +10,7 @@ namespace MinePix;
 public sealed class Settings
 {
     public string Theme { get; set; } = "graphite";
+    public bool UseDynamicIsland { get; set; } = true;
     public bool StartWithWindows { get; set; } = false;
     public bool ShowMusicInPill { get; set; } = true;
     public bool ClipboardEnabled { get; set; } = true;
