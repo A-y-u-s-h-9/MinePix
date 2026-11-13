@@ -15,6 +15,44 @@
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave">
     <Window.Resources>
+        <!-- slim glass scrollbar for the clipboard list -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="7"/>
+            <Setter Property="MinWidth" Value="7"/>
+            <Setter Property="Margin" Value="4,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid x:Name="Root" Background="Transparent" Width="7">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb x:Name="Thumb" Background="#3DFFFFFF">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="3.5"
+                                                        SnapsToDevicePixels="True"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.LineDownCommand" Background="Transparent" BorderThickness="0"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.LineUpCommand" Background="Transparent" BorderThickness="0"/>
+                                </Track.DecreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Thumb" Property="Background" Value="#5CFFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- bottom edge: light pooling along the notch, bright at center -->
         <LinearGradientBrush x:Key="BottomRimBrush" StartPoint="0,0.5" EndPoint="1,0.5">
             <GradientStop Color="#08FFFFFF" Offset="0"/>
