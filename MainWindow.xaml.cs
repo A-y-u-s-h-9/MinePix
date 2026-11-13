@@ -196,16 +196,40 @@ public partial class MainWindow : Window
 
     private void ApplyTheme()
     {
+        var glass = _settings.Theme?.ToLowerInvariant() is "glass";
         bool light = IsAppLightTheme();
+        var themeKey = _settings.Theme?.ToLowerInvariant();
 
-        var border = _settings.Theme?.ToLowerInvariant() switch
+        Color top, mid, bot;
+        switch (themeKey)
         {
-            "glass" => "#3D2B3344",   // classic glass — thin, airy
-            "black" => "#BF100F11",   // black — mostly opaque
-            _ => light ? "#33FFFFFF" : "#45222429",   // graphite — adapt to light/dark wallpaper
-        };
+            case "glass":
+                top = Color.FromArgb(0x44, 0xC8, 0xD4, 0xE0);
+                mid = Color.FromArgb(0x33, 0x90, 0xA4, 0xB8);
+                bot = Color.FromArgb(0x44, 0x20, 0x26, 0x30);
+                break;
+            case "black":
+                top = Color.FromArgb(0xBF, 0x14, 0x14, 0x16);
+                mid = Color.FromArgb(0x99, 0x11, 0x11, 0x13);
+                bot = Color.FromArgb(0xBF, 0x06, 0x06, 0x08);
+                break;
+            default: // graphite
+                top = light ? Color.FromArgb(0x55, 0xF5, 0xF5, 0xF7) : Color.FromArgb(0x59, 0x2E, 0x2E, 0x35);
+                mid = light ? Color.FromArgb(0x38, 0xE8, 0xE8, 0xED) : Color.FromArgb(0x40, 0x38, 0x38, 0x3F);
+                bot = light ? Color.FromArgb(0x55, 0xB8, 0xB8, 0xC2) : Color.FromArgb(0x59, 0x1F, 0x1F, 0x26);
+                break;
+        }
 
-        Island.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));
+        var gradient = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, 1),
+        };
+        gradient.GradientStops.Add(new GradientStop(top, 0.0));
+        gradient.GradientStops.Add(new GradientStop(mid, 0.5));
+        gradient.GradientStops.Add(new GradientStop(bot, 1.0));
+
+        Island.Background = gradient;
     }
 
     protected override void OnSourceInitialized(EventArgs e)
