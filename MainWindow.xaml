@@ -14,13 +14,36 @@
         ShowInTaskbar="False"
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave">
+    <Window.Resources>
+        <!-- Diagonal sheen, like light catching a water surface -->
+        <LinearGradientBrush x:Key="SheenBrush" StartPoint="0,0" EndPoint="0.75,1">
+            <GradientStop Color="#3DFFFFFF" Offset="0"/>
+            <GradientStop Color="#14FFFFFF" Offset="0.22"/>
+            <GradientStop Color="#00FFFFFF" Offset="0.45"/>
+        </LinearGradientBrush>
+        <!-- Bright top-left rim fading to nothing -->
+        <LinearGradientBrush x:Key="RimBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#5CFFFFFF" Offset="0"/>
+            <GradientStop Color="#1FFFFFFF" Offset="0.5"/>
+            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+    </Window.Resources>
+
     <Border x:Name="Island"
             CornerRadius="0,0,18,18"
-            Background="#D91C1B1F"
-            BorderBrush="#2EFFFFFF"
+            Background="#591E1D23"
+            BorderBrush="{StaticResource RimBrush}"
             BorderThickness="1,0,1,1"
             Padding="16,0">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="18" ShadowDepth="2" Direction="270" Color="#001018" Opacity="0.55"/>
+        </Border.Effect>
         <Grid>
+            <!-- glass layers: sheen on top of everything else -->
+            <Border CornerRadius="0,0,17,17"
+                    Background="{StaticResource SheenBrush}"
+                    IsHitTestVisible="False"/>
+
             <!-- Collapsed pill -->
             <Grid x:Name="PillView">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">

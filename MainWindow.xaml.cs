@@ -14,21 +14,19 @@ namespace MinePix;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private const int BottomCornerRadius = 18;
-
     private readonly Settings _settings;
     private readonly DispatcherTimer _collapseTimer;
     private readonly DispatcherTimer _clockTimer;
     private TaskbarIcon? _tray;
-    private IntPtr _hwnd = IntPtr.Zero;
     private bool _expanded;
     private bool _islandHidden;
 
     public MainWindow()
     {
-        InitializeComponent();
-
         _settings = Settings.Load();
+
+        InitializeComponent();
+        ApplyTheme();
 
         Width = _settings.CollapsedWidth;
         Height = _settings.CollapsedHeight;
@@ -43,44 +41,29 @@ public partial class MainWindow : Window
         PillClock.Text = DateTime.Now.ToString("HH:mm");
         _clockTimer.Start();
 
-        // keep the window centered while its width animates, and keep the notch region in sync
-        SizeChanged += (_, _) =>
-        {
-            Left = CenteredLeft(ActualWidth);
-            if (_hwnd != IntPtr.Zero)
-                DwmBlur.ApplyNotchRegion(_hwnd, (int)Math.Ceiling(ActualWidth), (int)Math.Ceiling(ActualHeight), BottomCornerRadius);
-        };
+        // keep the window centered while its width animates
+        SizeChanged += (_, _) => Left = CenteredLeft(ActualWidth);
 
         InitTray();
     }
 
     private static double CenteredLeft(double width) => (SystemParameters.PrimaryScreenWidth - width) / 2;
 
-    protected override void OnSourceInitialized(EventArgs e)
-    {
-        base.OnSourceInitialized(e);
-        _hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-        ApplyTheme();
-        DwmBlur.ApplyNotchRegion(_hwnd, (int)Width, (int)Height, BottomCornerRadius);
-    }
-
     /// <summary>
-    /// Applies the configured theme: WPF tint + acrylic strength.
-    /// "glass" is the lightest tint; "black" is nearly opaque; "graphite" is the default.
+    /// Applies the configured theme: the island tint. The DWM blur/acrylic APIs were probed and
+    /// rejected on this stack — they force the layered WPF window to composite opaque.
+    /// Pure per-pixel alpha gives the cleanest true-glass look; tint is kept low.
     /// </summary>
     private void ApplyTheme()
     {
-        var (border, alpha, r, g, b) = _settings.Theme?.ToLowerInvariant() switch
+        var border = _settings.Theme?.ToLowerInvariant() switch
         {
-            "glass" => ("#80292D38", (byte)0x90, (byte)0x1A, (byte)0x1E, (byte)0x28),
-            "black" => ("#CC0D0D0F", (byte)0xC0, (byte)0x08, (byte)0x08, (byte)0x0A),
-            _ => ("#B31E1D22", (byte)0xB0, (byte)0x1E, (byte)0x1D, (byte)0x22), // graphite
+            "glass" => "#3D2B3344", // glass — bluish tint, ~24% alpha
+            "black" => "#80100F11", // black — mostly opaque, still a hint of the backdrop
+            _ => "#1E1E1D23",       // graphite — ~12% alpha, bright backdrops show through
         };
 
         Island.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));
-
-        if (_hwnd != IntPtr.Zero)
-            DwmBlur.EnableAcrylic(_hwnd, alpha, r, g, b);
     }
 
     private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
