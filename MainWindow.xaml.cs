@@ -91,6 +91,9 @@ public partial class MainWindow : Window
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_SETTINGS") == "1")
             Dispatcher.BeginInvoke(new Action(() => { var w = new SettingsWindow(_settings) { Owner = this }; w.Show(); }), DispatcherPriority.Loaded);
 
+        // prime the music UI so the idle card is visible immediately
+        RefreshMusicUi();
+
         // dev affordance: force the expanded card open (used for headless screenshots/tests)
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1")
             Dispatcher.BeginInvoke(new Action(Expand), DispatcherPriority.Loaded);
@@ -283,6 +286,13 @@ public partial class MainWindow : Window
 
     private void OnMusicChanged()
     {
+        RefreshMusicUi();
+        UpdatePillMusicState();
+        UpdateProgressTick();
+    }
+
+    private void RefreshMusicUi()
+    {
         bool has = MusicService.Instance.HasSession;
 
         MusicCard.Visibility = _tab == "music" ? Visibility.Visible : Visibility.Collapsed;
@@ -318,9 +328,6 @@ public partial class MainWindow : Window
             MusicArt.Visibility = Visibility.Collapsed;
             MusicArtPlaceholder.Visibility = Visibility.Visible;
         }
-
-        UpdatePillMusicState();
-        UpdateProgressTick();
     }
 
     private void UpdatePillMusicState()
@@ -422,8 +429,13 @@ public partial class MainWindow : Window
                 _activeExpandedHeight = 330;
                 _ = RefreshControlsAsync();
                 break;
+            case "music":
+                _activeExpandedHeight = _settings.ExpandedHeight;
+                RefreshMusicUi();
+                break;
             default:
                 _activeExpandedHeight = _settings.ExpandedHeight;
+                RefreshMusicUi();
                 break;
         }
         AnimateWidthHeight(_settings.ExpandedWidth, _activeExpandedHeight);

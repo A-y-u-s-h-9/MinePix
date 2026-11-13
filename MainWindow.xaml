@@ -141,7 +141,7 @@
 
         <CornerRadius x:Key="PillRadius">18</CornerRadius>
 
-        <!-- flat island buttons -->
+        <!-- liquid glass brushes -->
         <Style x:Key="IslandTabButton" TargetType="ToggleButton">
             <Setter Property="Background" Value="#14FFFFFF"/>
             <Setter Property="Foreground" Value="#B8B8BD"/>
@@ -360,7 +360,7 @@
     </Window.Resources>
 
     <Border x:Name="Island"
-            CornerRadius="{StaticResource PillRadius}"
+            CornerRadius="{DynamicResource PillRadius}"
             Background="#591E1D23"
             BorderBrush="{StaticResource BottomRimBrush}"
             BorderThickness="0,0,0,1"
@@ -372,10 +372,10 @@
         <Grid>
             <!-- ===== liquid glass layers ===== -->
             <!-- top-edge bevel — the "glass thickness" -->
-            <Border x:Name="GlassRim" Margin="0" CornerRadius="{StaticResource PillRadius}" Background="{StaticResource TopEdgeBrush}"
+            <Border x:Name="GlassRim" Margin="0" Background="{StaticResource TopEdgeBrush}"
                     IsHitTestVisible="False" VerticalAlignment="Top" Height="2"/>
             <!-- horizontal glare — light sliding along the glass -->
-            <Border x:Name="GlassTopGlare" Margin="0" CornerRadius="{StaticResource PillRadius}" Background="{StaticResource TopGlareBrush}"
+            <Border x:Name="GlassTopGlare" Margin="0" Background="{StaticResource TopGlareBrush}"
                     IsHitTestVisible="False" VerticalAlignment="Top" Height="44"/>
             <!-- side rims -->
             <Border x:Name="GlassLeftRim" Margin="0" Background="{StaticResource SideRimLeft}"
@@ -829,4 +829,5 @@
         </Grid>
     </Border>
 </Window>
+
 
