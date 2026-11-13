@@ -116,7 +116,7 @@ public partial class MainWindow : Window
     {
         if (_settings.UseDynamicIsland)
         {
-            Island.CornerRadius = new CornerRadius(22, 22, 22, 22);
+            Island.CornerRadius = new CornerRadius(0, 0, 22, 22);
             PillDot.Width = 10; PillDot.Height = 10;
             PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x1F));
         }
