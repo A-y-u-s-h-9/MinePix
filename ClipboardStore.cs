@@ -163,6 +163,51 @@ public static class ClipboardStore
         }
     }
 
+    public static List<ClipboardItem> GetByCategory(string category, long maxItems = 200)
+    {
+        string? categoryLower = category?.ToLowerInvariant();
+        lock (Gate)
+        {
+            var result = new List<ClipboardItem>();
+            try
+            {
+                EnsureSchema();
+                using var conn = Open();
+                using var cmd = conn.CreateCommand();
+
+                if (string.IsNullOrWhiteSpace(categoryLower) || categoryLower == "all")
+                {
+                    cmd.CommandText = "SELECT id,kind,content,image_path,pinned,created_at,last_used_at,use_count FROM items ORDER BY pinned DESC, last_used_at DESC LIMIT $lim";
+                }
+                else if (categoryLower == "snippets")
+                {
+                    cmd.CommandText = "SELECT id,kind,content,image_path,pinned,created_at,last_used_at,use_count FROM items WHERE kind = 'text' AND use_count > 1 OR kind = 'pinned' ORDER BY pinned DESC, last_used_at DESC LIMIT $lim";
+                }
+                else if (categoryLower == "links")
+                {
+                    cmd.CommandText = "SELECT id,kind,content,image_path,pinned,created_at,last_used_at,use_count FROM items WHERE kind = 'text' AND (content LIKE 'http%' OR content LIKE 'https%') ORDER BY pinned DESC, last_used_at DESC LIMIT $lim";
+                }
+                else
+                {
+                    cmd.CommandText = "SELECT id,kind,content,image_path,pinned,created_at,last_used_at,use_count FROM items WHERE kind = $cat ORDER BY pinned DESC, last_used_at DESC LIMIT $lim";
+                    cmd.Parameters.AddWithValue("$cat", categoryLower);
+                }
+                cmd.Parameters.AddWithValue("$lim", maxItems);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read()) result.Add(ReadItem(reader));
+            }
+            catch { }
+            return result;
+        }
+    }
+
+    private static ClipboardItem ReadItem(System.Data.Common.DbDataReader reader)
+        => new ClipboardItem(
+            reader.GetInt64(0), reader.GetString(1), reader.GetString(2),
+            reader.IsDBNull(3) ? null : reader.GetString(3),
+            reader.GetInt64(4) == 1, reader.GetInt64(5), reader.GetInt64(6), reader.GetInt32(7));
+
     public static List<ClipboardItem> GetRecent(string? search, int limit = 60)
     {
         lock (Gate)
