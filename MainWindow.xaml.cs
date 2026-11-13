@@ -25,10 +25,12 @@ public partial class MainWindow : Window
     private bool _islandHidden;
     private bool _seeking;
     private bool _clipboardActive;
+    private double _activeExpandedHeight;
 
     public MainWindow()
     {
         _settings = Settings.Load();
+        _activeExpandedHeight = _settings.ExpandedHeight;
 
         InitializeComponent();
         ApplyTheme();
@@ -114,7 +116,7 @@ public partial class MainWindow : Window
         if (_expanded) return;
         _expanded = true;
 
-        AnimateWidthHeight(_settings.ExpandedWidth, _settings.ExpandedHeight);
+        AnimateWidthHeight(_settings.ExpandedWidth, _activeExpandedHeight);
 
         AnimateOpacity(PillView, 0, 120, () => PillView.Visibility = Visibility.Collapsed);
         ExpandedView.Visibility = Visibility.Visible;
@@ -268,12 +270,14 @@ public partial class MainWindow : Window
         if (clipboard)
         {
             SourceChip.Text = "local only";
+            _activeExpandedHeight = 330;
             RefreshClipboardList();
             AnimateWidthHeight(_settings.ExpandedWidth, 330);
         }
         else
         {
             SourceChip.Text = MusicService.Instance.HasSession && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
+            _activeExpandedHeight = _settings.ExpandedHeight;
             AnimateWidthHeight(_settings.ExpandedWidth, _settings.ExpandedHeight);
         }
     }
