@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -18,10 +19,12 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _collapseTimer;
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _mediaTimer;
+    private readonly DispatcherTimer _clipStatusTimer;
     private TaskbarIcon? _tray;
     private bool _expanded;
     private bool _islandHidden;
     private bool _seeking;
+    private bool _clipboardActive;
 
     public MainWindow()
     {
@@ -53,11 +56,23 @@ public partial class MainWindow : Window
         _mediaTimer.Tick += (_, _) => UpdateProgressTick();
         _mediaTimer.Start();
 
+        // clipboard
+        ClipboardStore.MaxItems = _settings.ClipboardMaxItems;
+        if (_settings.ClipboardEnabled)
+            ClipboardService.Instance.Start();
+        ClipboardService.Instance.ItemsChanged += RefreshClipboardList;
+
+        _clipStatusTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
+        _clipStatusTimer.Tick += (_, _) => { _clipStatusTimer.Stop(); ClipStatus.Visibility = Visibility.Collapsed; };
+
         InitTray();
 
         // dev affordance: force the expanded card open (used for headless screenshots/tests)
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1")
             Dispatcher.BeginInvoke(new Action(Expand), DispatcherPriority.Loaded);
+
+        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") == "clipboard")
+            Dispatcher.BeginInvoke(new Action(() => { Expand(); SetTab(true); }), DispatcherPriority.Loaded);
     }
 
     private static double CenteredLeft(double width) => (SystemParameters.PrimaryScreenWidth - width) / 2;
@@ -139,8 +154,9 @@ public partial class MainWindow : Window
     {
         bool has = MusicService.Instance.HasSession;
 
-        MusicCard.Visibility = has ? Visibility.Visible : Visibility.Collapsed;
-        SourceChip.Text = has && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
+        MusicCard.Visibility = !_clipboardActive && has ? Visibility.Visible : Visibility.Collapsed;
+        if (!_clipboardActive)
+            SourceChip.Text = has && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
 
         if (has)
         {
@@ -238,6 +254,114 @@ public partial class MainWindow : Window
     private void NextButton_Click(object sender, RoutedEventArgs e)
         => _ = MusicService.Instance.SkipNextAsync();
 
+    // ---------- tabs (Music / Clipboard) ----------
+
+    private void SetTab(bool clipboard)
+    {
+        _clipboardActive = clipboard;
+        TabMusicButton.IsChecked = !clipboard;
+        TabClipboardButton.IsChecked = clipboard;
+
+        MusicCard.Visibility = !clipboard && MusicService.Instance.HasSession ? Visibility.Visible : Visibility.Collapsed;
+        ClipPanel.Visibility = clipboard ? Visibility.Visible : Visibility.Collapsed;
+
+        if (clipboard)
+        {
+            SourceChip.Text = "local only";
+            RefreshClipboardList();
+            AnimateWidthHeight(_settings.ExpandedWidth, 330);
+        }
+        else
+        {
+            SourceChip.Text = MusicService.Instance.HasSession && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
+            AnimateWidthHeight(_settings.ExpandedWidth, _settings.ExpandedHeight);
+        }
+    }
+
+    private void TabMusic_Click(object sender, RoutedEventArgs e) => SetTab(false);
+    private void TabClipboard_Click(object sender, RoutedEventArgs e) => SetTab(true);
+
+    // ---------- clipboard ----------
+
+    private void RefreshClipboardList()
+    {
+        string search = ClipSearch?.Text?.Trim() ?? "";
+        if (ClipSearchPlaceholder is not null)
+            ClipSearchPlaceholder.Visibility = string.IsNullOrEmpty(search) ? Visibility.Visible : Visibility.Collapsed;
+
+        var items = ClipboardStore.GetRecent(search);
+        var rows = items.Select(i => new ClipRowViewModel
+        {
+            Id = i.Id,
+            Glyph = i.Kind switch { "files" => "F", "image" => "I", _ => "T" },
+            Preview = i.Preview,
+            MetaLine = i.Meta + " · " + ClipboardService.RelativeTime(i.LastUsedAt),
+            Pinned = i.Pinned,
+        }).ToList();
+
+        var total = ClipboardStore.Count();
+        ClipList.ItemsSource = rows;
+        ClipCount.Text = total == 1 ? "1 item" : $"{total} items";
+        ClipEmpty.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ClipSearch_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => RefreshClipboardList();
+
+    private void ClipRow_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is Button || e.OriginalSource is ToggleButton) return;
+        if (sender is FrameworkElement fe && fe.DataContext is ClipRowViewModel vm)
+        {
+            var item = ClipboardStore.GetById(vm.Id);
+            if (item is not null)
+            {
+                ClipboardService.CopyBack(item);
+                FlashClipStatus("Copied ✓");
+                RefreshClipboardList();
+            }
+        }
+    }
+
+    private void ClipPin_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleButton btn && long.TryParse(btn.Tag?.ToString(), out long id))
+        {
+            ClipboardStore.SetPinned(id, btn.IsChecked == true);
+            RefreshClipboardList();
+        }
+    }
+
+    private void ClipDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && long.TryParse(btn.Tag?.ToString(), out long id))
+        {
+            ClipboardStore.Delete(id);
+            RefreshClipboardList();
+        }
+    }
+
+    private void ClipClearUnpinned_Click(object sender, RoutedEventArgs e)
+    {
+        ClipboardStore.ClearUnpinned();
+        FlashClipStatus("Cleared unpinned");
+        RefreshClipboardList();
+    }
+
+    private void ClipClearAll_Click(object sender, RoutedEventArgs e)
+    {
+        ClipboardStore.ClearAll();
+        FlashClipStatus("Cleared everything");
+        RefreshClipboardList();
+    }
+
+    private void FlashClipStatus(string text)
+    {
+        ClipStatus.Text = text;
+        ClipStatus.Visibility = Visibility.Visible;
+        _clipStatusTimer.Stop();
+        _clipStatusTimer.Start();
+    }
+
     // ---------- tray ----------
 
     private void InitTray()
@@ -286,6 +410,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         MusicService.Instance.Changed -= OnMusicChanged;
+        ClipboardService.Instance.ItemsChanged -= RefreshClipboardList;
         _tray?.Dispose();
         base.OnClosed(e);
     }

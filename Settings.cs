@@ -12,6 +12,8 @@ public sealed class Settings
     public string Theme { get; set; } = "graphite";
     public bool StartWithWindows { get; set; } = false;
     public bool ShowMusicInPill { get; set; } = true;
+    public bool ClipboardEnabled { get; set; } = true;
+    public int ClipboardMaxItems { get; set; } = 100;
     public double CollapsedWidth { get; set; } = 220;
     public double CollapsedHeight { get; set; } = 34;
     public double ExpandedWidth { get; set; } = 560;

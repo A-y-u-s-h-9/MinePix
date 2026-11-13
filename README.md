@@ -25,7 +25,7 @@ translucent tint, sheen and a soft glow, all true transparency composited by DWM
 - [x] M1 — Island skeleton (tray, hover expand/collapse, settings, single instance)
 - [x] M2 — Liquid glass look (themeable tint, sheen, glow)
 - [x] M3 — Music now-playing (SMTC: artwork, play/pause/skip, seek, progress arc)
-- [ ] M4 — Clipboard history (SQLite, pin/search, paste on click)
+- [x] M4 — Clipboard history (SQLite, pin/search, copy-back on click)
 - [ ] M5 — Quick controls (volume, brightness, Wi-Fi, Bluetooth)
 - [ ] M6 — Reminders & timer (snooze/repeat, shown in the island)
 - [ ] M7 — Notifications peek (MSIX identity required)

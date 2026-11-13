@@ -23,6 +23,124 @@
         </LinearGradientBrush>
 
         <!-- flat island buttons -->
+        <Style x:Key="IslandTabButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="#14FFFFFF"/>
+            <Setter Property="Foreground" Value="#B8B8BD"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,8,8,0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="10,5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#26FFFFFF"/>
+                    <Setter Property="Foreground" Value="#F5F5F7"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1FFFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="IslandFlatButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#F5F5F7"/>
+                    <Setter Property="Background" Value="#14FFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="IslandFlatDanger" TargetType="Button" BasedOn="{StaticResource IslandFlatButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#FF6E6E"/>
+                    <Setter Property="Background" Value="#1FFF6E6E"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- clipboard row buttons -->
+        <Style x:Key="ClipMiniButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="FontFamily" Value="Segoe UI Symbol"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="2,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#F5F5F7"/>
+                    <Setter Property="Background" Value="#1FFFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ClipPinButton" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="FontFamily" Value="Segoe UI Symbol"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="2,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Foreground" Value="#FFD60A"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1FFFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="IslandButton" TargetType="Button">
             <Setter Property="Background" Value="#14FFFFFF"/>
             <Setter Property="Foreground" Value="#F5F5F7"/>
@@ -198,9 +316,112 @@
                     </Grid>
                 </Border>
 
-                <!-- Feature stack (placeholders until M4+ land) -->
+                <!-- Clipboard panel -->
+                <Grid Grid.Row="2" x:Name="ClipPanel" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- search -->
+                    <Border Grid.Row="0" CornerRadius="10" Background="#14FFFFFF" Padding="10,6" Margin="0,0,0,6">
+                        <Grid>
+                            <TextBox x:Name="ClipSearch" Background="Transparent" BorderThickness="0"
+                                     Foreground="#F5F5F7" CaretBrush="#F5F5F7" FontSize="12"
+                                     FontFamily="Segoe UI" TextChanged="ClipSearch_TextChanged"/>
+                            <TextBlock x:Name="ClipSearchPlaceholder" Text="Search clipboard…" Foreground="#6E6E73"
+                                       FontSize="12" FontFamily="Segoe UI" VerticalAlignment="Center"
+                                       HorizontalAlignment="Left" IsHitTestVisible="False"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- items -->
+                    <ListBox Grid.Row="1" x:Name="ClipList" Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             KeyboardNavigation.TabNavigation="Continue">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0,0,0,2"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#14FFFFFF"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="Transparent" Padding="8,6" MouseLeftButtonUp="ClipRow_MouseLeftButtonUp">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Ellipse Width="26" Height="26" Fill="#1FFFFFFF" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Glyph}" Foreground="#8AB4FF" FontSize="12"
+                                                   FontFamily="Segoe UI Semibold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+
+                                        <StackPanel Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Preview}" Foreground="#F5F5F7" FontSize="12"
+                                                       FontFamily="Segoe UI" TextTrimming="CharacterEllipsis" MaxWidth="380"/>
+                                            <TextBlock Foreground="#8E8E93" FontSize="9" FontFamily="Segoe UI"
+                                                       Text="{Binding MetaLine}" Margin="0,1,0,0"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <ToggleButton Content="☆" Tag="{Binding Id}" IsChecked="{Binding Pinned, Mode=TwoWay}"
+                                                          Style="{StaticResource ClipPinButton}" Click="ClipPin_Click" ToolTip="Pin"/>
+                                            <Button Content="×" Tag="{Binding Id}" Style="{StaticResource ClipMiniButton}"
+                                                    Click="ClipDelete_Click" ToolTip="Remove"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock x:Name="ClipEmpty" Grid.Row="1" Text="Clipboard is empty — copy something"
+                               Foreground="#6E6E73" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Visibility="Collapsed"/>
+
+                    <Border Grid.Row="2" Height="1" Background="#1FFFFFFF" Margin="0,6"/>
+
+                    <Grid Grid.Row="3">
+                        <TextBlock x:Name="ClipCount" Text="0 items" Foreground="#8E8E93" FontSize="11"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ClipStatus" Text="Copied ✓" Foreground="#8AB4FF" FontSize="11"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button x:Name="ClipClearUnpinned" Content="Clear unpinned" Style="{StaticResource IslandFlatButton}"
+                                    Click="ClipClearUnpinned_Click"/>
+                            <Button x:Name="ClipClearAll" Content="Clear all" Style="{StaticResource IslandFlatDanger}"
+                                    Margin="6,0,0,0" Click="ClipClearAll_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- Feature stack (placeholders until M5+ land) -->
                 <WrapPanel Grid.Row="3" VerticalAlignment="Bottom">
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,8,0"><TextBlock Text="Clipboard · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
+                    <ToggleButton x:Name="TabMusicButton" Content="Music" Style="{StaticResource IslandTabButton}"
+                                  IsChecked="True" Click="TabMusic_Click"/>
+                    <ToggleButton x:Name="TabClipboardButton" Content="Clipboard" Style="{StaticResource IslandTabButton}"
+                                  Click="TabClipboard_Click"/>
                     <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,8,0"><TextBlock Text="Controls · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
                     <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,8,0"><TextBlock Text="Reminders · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
                     <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,0,0"><TextBlock Text="FPS · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
