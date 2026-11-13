@@ -169,6 +169,40 @@
             </Style.Triggers>
         </Style>
 
+        <!-- icon nav buttons in header: iOS-like orbs -->
+        <Style x:Key="IslandIconButton" TargetType="Button">
+            <Setter Property="Background" Value="#12FFFFFF"/>
+            <Setter Property="Foreground" Value="#B8B8BD"/>
+            <Setter Property="FontFamily" Value="Segoe UI Symbol"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Margin" Value="4,0,0,0"/>
+            <Setter Property="ToolTip" Value=""/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="15" Padding="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1FFFFFFF"/>
+                    <Setter Property="Foreground" Value="#F5F5F7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="IslandIconButtonActive" TargetType="Button" BasedOn="{StaticResource IslandIconButton}">
+            <Setter Property="Background" Value="#2EFFFFFF"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+
         <Style x:Key="IslandFlatButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#8E8E93"/>
@@ -341,8 +375,6 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
@@ -356,12 +388,12 @@
                                    Margin="8,0,0,0"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock x:Name="SourceChip" Text="M3"
-                               Foreground="#8E8E93"
-                               FontFamily="Segoe UI"
-                               FontSize="11"
-                               HorizontalAlignment="Right"
-                               VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="IconBar">
+                        <Button x:Name="IconMusic"     Content="&#x266A;" Style="{StaticResource IslandIconButton}" Click="IconMusic_Click"     Tag="music"     ToolTip="Music"/>
+                        <Button x:Name="IconClipboard" Content="&#x1F4CB;" Style="{StaticResource IslandIconButton}" Click="IconClipboard_Click" Tag="clipboard" ToolTip="Clipboard"/>
+                        <Button x:Name="IconControls"  Content="&#x2503;" Style="{StaticResource IslandIconButton}" Click="IconControls_Click"  Tag="controls"  ToolTip="Controls"/>
+                        <Button x:Name="IconSettings"  Content="&#x2699;" Style="{StaticResource IslandIconButton}" Click="IconSettings_Click"  Tag="settings"  ToolTip="Settings"/>
+                    </StackPanel>
                 </Grid>
 
                 <Border Grid.Row="1" Height="1" Background="#1FFFFFFF" Margin="0,8"/>
@@ -734,19 +766,8 @@
                     </Border>
                 </Grid>
 
-                <!-- Feature stack (placeholders until M6+ land) -->
-                <WrapPanel Grid.Row="3" VerticalAlignment="Center">
-                    <ToggleButton x:Name="TabMusicButton" Content="Music" Style="{StaticResource IslandTabButton}"
-                                  IsChecked="True" Click="TabMusic_Click"/>
-                    <ToggleButton x:Name="TabClipboardButton" Content="Clipboard" Style="{StaticResource IslandTabButton}"
-                                  Click="TabClipboard_Click"/>
-                    <ToggleButton x:Name="TabControlsButton" Content="Controls" Style="{StaticResource IslandTabButton}"
-                                  Click="TabControls_Click"/>
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,8,0"><TextBlock Text="Reminders · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,0,0"><TextBlock Text="FPS · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
-                </WrapPanel>
-
-                <TextBlock Grid.Row="5" x:Name="HintText"
+                <!-- hint -->
+                <TextBlock Grid.Row="3" x:Name="HintText"
                            Text="Hover to browse · pointer away to collapse"
                            Foreground="#6E6E73"
                            FontFamily="Segoe UI"

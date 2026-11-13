@@ -235,8 +235,6 @@ public partial class MainWindow : Window
         bool has = MusicService.Instance.HasSession;
 
         MusicCard.Visibility = _tab == "music" && has ? Visibility.Visible : Visibility.Collapsed;
-        if (_tab == "music")
-            SourceChip.Text = has && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
 
         if (has)
         {
@@ -341,9 +339,12 @@ public partial class MainWindow : Window
         _tab = tab;
         _controlsActive = tab == "controls";
 
-        TabMusicButton.IsChecked = tab == "music";
-        TabClipboardButton.IsChecked = tab == "clipboard";
-        TabControlsButton.IsChecked = tab == "controls";
+        var activeStyle = (Style)FindResource("IslandIconButtonActive");
+        var inactiveStyle = (Style)FindResource("IslandIconButton");
+        IconMusic.Style = tab == "music" ? activeStyle : inactiveStyle;
+        IconClipboard.Style = tab == "clipboard" ? activeStyle : inactiveStyle;
+        IconControls.Style = tab == "controls" ? activeStyle : inactiveStyle;
+        IconSettings.Style = inactiveStyle; // settings is momentary (opens window)
 
         MusicCard.Visibility = tab == "music" && MusicService.Instance.HasSession ? Visibility.Visible : Visibility.Collapsed;
         ClipPanel.Visibility = tab == "clipboard" ? Visibility.Visible : Visibility.Collapsed;
@@ -352,26 +353,28 @@ public partial class MainWindow : Window
         switch (tab)
         {
             case "clipboard":
-                SourceChip.Text = "local only";
                 _activeExpandedHeight = 330;
                 RefreshClipboardList();
                 break;
             case "controls":
-                SourceChip.Text = "quick settings";
                 _activeExpandedHeight = 330;
                 _ = RefreshControlsAsync();
                 break;
             default:
-                SourceChip.Text = MusicService.Instance.HasSession && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
                 _activeExpandedHeight = _settings.ExpandedHeight;
                 break;
         }
         AnimateWidthHeight(_settings.ExpandedWidth, _activeExpandedHeight);
     }
 
-    private void TabMusic_Click(object sender, RoutedEventArgs e) => SetTab("music");
-    private void TabClipboard_Click(object sender, RoutedEventArgs e) => SetTab("clipboard");
-    private void TabControls_Click(object sender, RoutedEventArgs e) => SetTab("controls");
+    private void IconMusic_Click(object sender, RoutedEventArgs e)     => SetTab("music");
+    private void IconClipboard_Click(object sender, RoutedEventArgs e) => SetTab("clipboard");
+    private void IconControls_Click(object sender, RoutedEventArgs e)  => SetTab("controls");
+    private void IconSettings_Click(object sender, RoutedEventArgs e)
+    {
+        var win = new SettingsWindow(_settings) { Owner = this };
+        win.Show();
+    }
 
     // ---------- controls ----------
 
@@ -660,13 +663,10 @@ public partial class MainWindow : Window
         MusicCard.Visibility = Visibility.Collapsed;
         ClipPanel.Visibility = Visibility.Collapsed;
         ControlsPanel.Visibility = Visibility.Collapsed;
-        TabMusicButton.Visibility = Visibility.Collapsed;
-        TabClipboardButton.Visibility = Visibility.Collapsed;
-        TabControlsButton.Visibility = Visibility.Collapsed;
+        IconBar.Visibility = Visibility.Collapsed;
         HintText.Visibility = Visibility.Collapsed;
 
         SelectorPanel.Visibility = Visibility.Visible;
-        SourceChip.Text = mode == SelectorMode.Wifi ? "Wi-Fi" : "Bluetooth";
         SelectorTitle.Text = mode == SelectorMode.Wifi ? "Wi-Fi" : "Bluetooth";
         SelectorRefreshButton.Visibility = mode == SelectorMode.Wifi ? Visibility.Visible : Visibility.Collapsed;
         SelectorSettingsLink.Content = mode == SelectorMode.Wifi ? "Network Settings →" : "Connected Devices →";
@@ -700,9 +700,7 @@ public partial class MainWindow : Window
         SelectorPanel.Visibility = Visibility.Collapsed;
 
         // restore tab strip + hint
-        TabMusicButton.Visibility = Visibility.Visible;
-        TabClipboardButton.Visibility = Visibility.Visible;
-        TabControlsButton.Visibility = Visibility.Visible;
+        IconBar.Visibility = Visibility.Visible;
         HintText.Visibility = Visibility.Visible;
 
         // reapply current tab content
