@@ -166,12 +166,32 @@ public partial class MainWindow : Window
     {
         var border = _settings.Theme?.ToLowerInvariant() switch
         {
-            "glass" => "#8026313D", // glass — bluish, ~50% alpha, readable over bright scenes
-            "black" => "#B0100F11", // black — mostly opaque, still a hint of the backdrop
-            _ => "#661F1F25",       // graphite — ~40% alpha, still glassy, rows stay readable
+            "glass" => "#3D2B3344",   // classic glass — thin, airy
+            "black" => "#BF100F11",   // black — mostly opaque
+            _ => "#45222429",          // graphite — liquid glass, ~27% alpha, warm tint
         };
 
         Island.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+
+        // start the travelling glint sweep once the window has a handle
+        var sb = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
+        var anim = new DoubleAnimation
+        {
+            From = -70,
+            To = 800,
+            Duration = new Duration(TimeSpan.FromSeconds(6.5)),
+            AutoReverse = true,
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+        };
+        Storyboard.SetTarget(anim, TravellingGlintTransform);
+        Storyboard.SetTargetProperty(anim, new PropertyPath(TranslateTransform.XProperty));
+        sb.Children.Add(anim);
+        sb.Begin(this);
     }
 
     // ---------- island expand / collapse ----------

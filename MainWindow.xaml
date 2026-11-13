@@ -17,7 +17,7 @@
     <Window.Resources>
         <!-- iOS-style control tiles -->
         <Style x:Key="IslandMasterTile" TargetType="Border">
-            <Setter Property="Background" Value="#AD20232A"/>
+            <Setter Property="Background" Value="#8C202028"/>
             <Setter Property="CornerRadius" Value="18"/>
             <Setter Property="BorderBrush" Value="#14FFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -203,6 +203,33 @@
             <Setter Property="Foreground" Value="#FFFFFF"/>
         </Style>
 
+        <!-- liquid glass brushes -->
+        <LinearGradientBrush x:Key="TopGlareBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#28FFFFFF" Offset="0"/>
+            <GradientStop Color="#0FFFFFFF" Offset="0.12"/>
+            <GradientStop Color="#00000000" Offset="0.32"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="TopEdgeBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#55FFFFFF" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="SideRimLeft" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#30FFFFFF" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="SideRimRight" StartPoint="1,0" EndPoint="0,0">
+            <GradientStop Color="#30FFFFFF" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="1"/>
+        </LinearGradientBrush>
+        <RadialGradientBrush x:Key="SpecularBlob" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+            <GradientStop Color="#15FFFFFF" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="1"/>
+        </RadialGradientBrush>
+        <RadialGradientBrush x:Key="GlintBrush" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+            <GradientStop Color="#5AFFFFFF" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="1"/>
+        </RadialGradientBrush>
+
         <Style x:Key="IslandFlatButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#8E8E93"/>
@@ -341,6 +368,36 @@
             <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
         </Border.Effect>
         <Grid>
+            <!-- ===== liquid glass layers ===== -->
+            <!-- top-edge bevel — the "glass thickness" -->
+            <Border Margin="0" CornerRadius="0,0,18,18" Background="{StaticResource TopEdgeBrush}"
+                    IsHitTestVisible="False" VerticalAlignment="Top" Height="2"/>
+            <!-- horizontal glare — light sliding along the glass -->
+            <Border Margin="0" CornerRadius="0" Background="{StaticResource TopGlareBrush}"
+                    IsHitTestVisible="False" VerticalAlignment="Top" Height="40"/>
+            <!-- side rims -->
+            <Border Margin="0" Background="{StaticResource SideRimLeft}"
+                    IsHitTestVisible="False" HorizontalAlignment="Left" Width="1"/>
+            <Border Margin="0" Background="{StaticResource SideRimRight}"
+                    IsHitTestVisible="False" HorizontalAlignment="Right" Width="1"/>
+            <!-- soft top glow — blurred glare under the "bevel" -->
+            <Border Margin="0" Background="{StaticResource SpecularBlob}"
+                    IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Top"
+                    Width="180" Height="80" Opacity="0.35"/>
+            <!-- travelling glint — a specular dot that sweeps left→right periodically -->
+            <Ellipse x:Name="TravellingGlint"
+                     Fill="{StaticResource GlintBrush}"
+                     Width="70" Height="24"
+                     HorizontalAlignment="Left"
+                     IsHitTestVisible="False"
+                     Margin="-70,0,0,0"
+                     VerticalAlignment="Center"
+                     Opacity="0.55">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="TravellingGlintTransform"/>
+                </Ellipse.RenderTransform>
+            </Ellipse>
+
             <!-- Collapsed pill -->
             <Grid x:Name="PillView">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
