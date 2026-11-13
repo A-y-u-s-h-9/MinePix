@@ -21,6 +21,44 @@
             <GradientStop Color="#2EFFFFFF" Offset="0.5"/>
             <GradientStop Color="#08FFFFFF" Offset="1"/>
         </LinearGradientBrush>
+
+        <!-- flat island buttons -->
+        <Style x:Key="IslandButton" TargetType="Button">
+            <Setter Property="Background" Value="#14FFFFFF"/>
+            <Setter Property="Foreground" Value="#F5F5F7"/>
+            <Setter Property="FontFamily" Value="Segoe UI Symbol"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="12,6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#26FFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="IslandButtonLarge" TargetType="Button" BasedOn="{StaticResource IslandButton}">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10" Padding="15,9">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Border x:Name="Island"
@@ -33,16 +71,19 @@
             <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
         </Border.Effect>
         <Grid>
-
             <!-- Collapsed pill -->
             <Grid x:Name="PillView">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
-                    <Ellipse Width="8" Height="8" Fill="#8AB4FF" VerticalAlignment="Center"/>
-                    <TextBlock Text="MinePix"
+                    <Ellipse x:Name="PillDot" Width="8" Height="8" Fill="#8AB4FF" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PillNote" Text="&#x266A;" Foreground="#8AB4FF" FontSize="13"
+                               VerticalAlignment="Center" Visibility="Collapsed"/>
+                    <TextBlock x:Name="PillTitle" Text="MinePix"
                                Foreground="#F5F5F7"
                                FontFamily="Segoe UI Semibold"
                                FontSize="13"
                                Margin="8,0,0,0"
+                               MaxWidth="120"
+                               TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 <TextBlock x:Name="PillClock"
@@ -62,7 +103,9 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
@@ -77,7 +120,7 @@
                                    Margin="8,0,0,0"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock Text="M1 · skeleton"
+                    <TextBlock x:Name="SourceChip" Text="M3"
                                Foreground="#8E8E93"
                                FontFamily="Segoe UI"
                                FontSize="11"
@@ -87,21 +130,89 @@
 
                 <Border Grid.Row="1" Height="1" Background="#1FFFFFFF" Margin="0,8"/>
 
-                <!-- Feature stack (placeholders until M3–M8 land) -->
-                <WrapPanel Grid.Row="2" VerticalAlignment="Center">
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,0,8,8"><TextBlock Text="Music · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,0,8,8"><TextBlock Text="Clipboard · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,0,8,8"><TextBlock Text="Controls · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,0,8,8"><TextBlock Text="Reminders · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
-                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,0,0,8"><TextBlock Text="FPS · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
+                <!-- Music card -->
+                <Border Grid.Row="2" x:Name="MusicCard" Background="#3814171C" CornerRadius="14"
+                        BorderBrush="#14FFFFFF" BorderThickness="1"
+                        Padding="10" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="64"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- artwork -->
+                        <Border Width="64" Height="64" CornerRadius="12" Background="#1FFFFFFF" ClipToBounds="True">
+                            <Grid>
+                                <TextBlock x:Name="MusicArtPlaceholder" Text="&#x266A;" Foreground="#8AB4FF"
+                                           FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Image x:Name="MusicArt" Stretch="UniformToFill" Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Column="1" Margin="12,0,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock x:Name="MusicTitle" Text="" Foreground="#F5F5F7"
+                                       FontFamily="Segoe UI Semibold" FontSize="13"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="MusicArtist" Grid.Row="1" Text="" Foreground="#A9A9AF"
+                                       FontFamily="Segoe UI" FontSize="11" Margin="0,1,0,0"
+                                       TextTrimming="CharacterEllipsis"/>
+
+                            <!-- seek bar -->
+                            <Grid Grid.Row="2" Margin="0,7,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="32"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="32"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="MusicPos" Text="0:00" Foreground="#8E8E93" FontSize="9" VerticalAlignment="Center"/>
+                                <Border x:Name="SeekTrack" Grid.Column="1" Height="14" Background="Transparent"
+                                        Cursor="Hand" MouseDown="SeekTrack_MouseDown"
+                                        MouseMove="SeekTrack_MouseMove" MouseUp="SeekTrack_MouseUp">
+                                    <Grid VerticalAlignment="Center">
+                                        <Border Height="3" CornerRadius="1.5" Background="#2EFFFFFF"/>
+                                        <Border x:Name="SeekFill" Height="3" CornerRadius="1.5" Background="#8AB4FF"
+                                                HorizontalAlignment="Left" Width="0"/>
+                                    </Grid>
+                                </Border>
+                                <TextBlock x:Name="MusicDuration" Grid.Column="2" Text="0:00" Foreground="#8E8E93" FontSize="9" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <!-- controls -->
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" Margin="0,6,0,0">
+                                <Button x:Name="PrevButton" Content="&#x23EE;" Style="{StaticResource IslandButton}"
+                                        Click="PrevButton_Click" ToolTip="Previous track"/>
+                                <Button x:Name="PlayPauseButton" Content="&#x23F8;" Style="{StaticResource IslandButtonLarge}"
+                                        Margin="8,0,8,0" Click="PlayPauseButton_Click" ToolTip="Play / pause"/>
+                                <Button x:Name="NextButton" Content="&#x23ED;" Style="{StaticResource IslandButton}"
+                                        Click="NextButton_Click" ToolTip="Next track"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Feature stack (placeholders until M4+ land) -->
+                <WrapPanel Grid.Row="3" VerticalAlignment="Bottom">
+                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,8,0"><TextBlock Text="Clipboard · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
+                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,8,0"><TextBlock Text="Controls · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
+                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,8,0"><TextBlock Text="Reminders · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
+                    <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,0,0"><TextBlock Text="FPS · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
                 </WrapPanel>
 
-                <TextBlock Grid.Row="3"
+                <TextBlock Grid.Row="5"
                            Text="Hover to browse · pointer away to collapse"
                            Foreground="#6E6E73"
                            FontFamily="Segoe UI"
                            FontSize="10"
-                           HorizontalAlignment="Center"/>
+                           HorizontalAlignment="Center"
+                           Margin="0,6,0,0"/>
             </Grid>
         </Grid>
     </Border>

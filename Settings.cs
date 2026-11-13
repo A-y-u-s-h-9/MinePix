@@ -11,10 +11,11 @@ public sealed class Settings
 {
     public string Theme { get; set; } = "graphite";
     public bool StartWithWindows { get; set; } = false;
+    public bool ShowMusicInPill { get; set; } = true;
     public double CollapsedWidth { get; set; } = 220;
     public double CollapsedHeight { get; set; } = 34;
     public double ExpandedWidth { get; set; } = 560;
-    public double ExpandedHeight { get; set; } = 172;
+    public double ExpandedHeight { get; set; } = 235;
     public int CollapseDelayMs { get; set; } = 250;
 
     public static string SettingsDir =>
