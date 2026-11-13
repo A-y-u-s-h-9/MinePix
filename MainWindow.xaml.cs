@@ -40,9 +40,13 @@ public partial class MainWindow : Window
 
         InitializeComponent();
         ApplyTheme();
+        ApplyIslandShape();
 
-        Width = _settings.CollapsedWidth;
-        Height = _settings.CollapsedHeight;
+        _settingsCollapsedWidth = _settings.CollapsedWidth;
+        _settingsCollapsedHeight = _settings.CollapsedHeight;
+
+        Width = ComputeCollapsedWidth();
+        Height = ComputeCollapsedHeight();
         Top = 0;
         Left = CenteredLeft(Width);
 
@@ -101,6 +105,32 @@ public partial class MainWindow : Window
         }
     }
 
+    private double _settingsCollapsedWidth;
+    private double _settingsCollapsedHeight;
+
+    /// <summary>
+    /// Applies the current island shape (dynamic-island vs classic pill): window size,
+    /// corner radius, camera dot sizing and the drop-shadow sizing.
+    /// </summary>
+    private void ApplyIslandShape()
+    {
+        if (_settings.UseDynamicIsland)
+        {
+            Island.CornerRadius = new CornerRadius(22, 22, 22, 22);
+            PillDot.Width = 10; PillDot.Height = 10;
+            PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x1F));
+        }
+        else
+        {
+            Island.CornerRadius = new CornerRadius(0, 0, 18, 18);
+            PillDot.Width = 8; PillDot.Height = 8;
+            PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0xB4, 0xFF));
+        }
+    }
+
+    private double ComputeCollapsedWidth()  => _settings.UseDynamicIsland ? Math.Max(_settings.CollapsedWidth, 360) : _settings.CollapsedWidth;
+    private double ComputeCollapsedHeight() => _settings.UseDynamicIsland ? Math.Max(_settings.CollapsedHeight, 44) : _settings.CollapsedHeight;
+
     private static double CenteredLeft(double width) => (SystemParameters.PrimaryScreenWidth - width) / 2;
 
     /// <summary>
@@ -110,12 +140,13 @@ public partial class MainWindow : Window
     public void RefreshFromSettings()
     {
         ApplyTheme();
+        ApplyIslandShape();
         _collapseTimer.Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs);
 
         if (!_expanded)
         {
-            Width = _settings.CollapsedWidth;
-            Height = _settings.CollapsedHeight;
+            Width = ComputeCollapsedWidth();
+            Height = ComputeCollapsedHeight();
             Left = CenteredLeft(Width);
         }
         else
@@ -124,9 +155,6 @@ public partial class MainWindow : Window
             Height = _settings.ExpandedHeight;
             Left = CenteredLeft(Width);
         }
-
-        // If the island-mode setting changes, the pill shape can change too; just re-theme here.
-        // The next hover-expansion will pick up the new width/height values anyway.
     }
 
     /// <summary>
@@ -178,7 +206,7 @@ public partial class MainWindow : Window
         if (!_expanded) return;
         _expanded = false;
 
-        AnimateWidthHeight(_settings.CollapsedWidth, _settings.CollapsedHeight);
+        AnimateWidthHeight(ComputeCollapsedWidth(), ComputeCollapsedHeight());
 
         AnimateOpacity(ExpandedView, 0, 120, () => ExpandedView.Visibility = Visibility.Collapsed);
         PillView.Visibility = Visibility.Visible;
