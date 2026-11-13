@@ -24,8 +24,14 @@ public partial class MainWindow : Window
     private bool _expanded;
     private bool _islandHidden;
     private bool _seeking;
-    private bool _clipboardActive;
+    private bool _controlsActive;
+    private string _tab = "music";
+    private bool _volumeDragging;
+    private bool _brightnessDragging;
+    private DateTime _lastBrightnessApply = DateTime.MinValue;
     private double _activeExpandedHeight;
+    private readonly DispatcherTimer _controlsTimer;
+    private RadioService.Snapshot _radios = new(null, null);
 
     public MainWindow()
     {
@@ -67,14 +73,22 @@ public partial class MainWindow : Window
         _clipStatusTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
         _clipStatusTimer.Tick += (_, _) => { _clipStatusTimer.Stop(); ClipStatus.Visibility = Visibility.Collapsed; };
 
+        _controlsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _controlsTimer.Tick += (_, _) =>
+        {
+            if (_controlsActive)
+                _ = RefreshControlsAsync();
+        };
+        _controlsTimer.Start();
+
         InitTray();
 
         // dev affordance: force the expanded card open (used for headless screenshots/tests)
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1")
             Dispatcher.BeginInvoke(new Action(Expand), DispatcherPriority.Loaded);
 
-        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") == "clipboard")
-            Dispatcher.BeginInvoke(new Action(() => { Expand(); SetTab(true); }), DispatcherPriority.Loaded);
+        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") is string forceTab && (forceTab == "clipboard" || forceTab == "controls"))
+            Dispatcher.BeginInvoke(new Action(() => { Expand(); SetTab(forceTab); }), DispatcherPriority.Loaded);
     }
 
     private static double CenteredLeft(double width) => (SystemParameters.PrimaryScreenWidth - width) / 2;
@@ -156,8 +170,8 @@ public partial class MainWindow : Window
     {
         bool has = MusicService.Instance.HasSession;
 
-        MusicCard.Visibility = !_clipboardActive && has ? Visibility.Visible : Visibility.Collapsed;
-        if (!_clipboardActive)
+        MusicCard.Visibility = _tab == "music" && has ? Visibility.Visible : Visibility.Collapsed;
+        if (_tab == "music")
             SourceChip.Text = has && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
 
         if (has)
@@ -256,34 +270,201 @@ public partial class MainWindow : Window
     private void NextButton_Click(object sender, RoutedEventArgs e)
         => _ = MusicService.Instance.SkipNextAsync();
 
-    // ---------- tabs (Music / Clipboard) ----------
+    // ---------- tabs (Music / Clipboard / Controls) ----------
 
-    private void SetTab(bool clipboard)
+    private void SetTab(string tab)
     {
-        _clipboardActive = clipboard;
-        TabMusicButton.IsChecked = !clipboard;
-        TabClipboardButton.IsChecked = clipboard;
+        _tab = tab;
+        _controlsActive = tab == "controls";
 
-        MusicCard.Visibility = !clipboard && MusicService.Instance.HasSession ? Visibility.Visible : Visibility.Collapsed;
-        ClipPanel.Visibility = clipboard ? Visibility.Visible : Visibility.Collapsed;
+        TabMusicButton.IsChecked = tab == "music";
+        TabClipboardButton.IsChecked = tab == "clipboard";
+        TabControlsButton.IsChecked = tab == "controls";
 
-        if (clipboard)
+        MusicCard.Visibility = tab == "music" && MusicService.Instance.HasSession ? Visibility.Visible : Visibility.Collapsed;
+        ClipPanel.Visibility = tab == "clipboard" ? Visibility.Visible : Visibility.Collapsed;
+        ControlsPanel.Visibility = tab == "controls" ? Visibility.Visible : Visibility.Collapsed;
+
+        switch (tab)
         {
-            SourceChip.Text = "local only";
-            _activeExpandedHeight = 330;
-            RefreshClipboardList();
-            AnimateWidthHeight(_settings.ExpandedWidth, 330);
+            case "clipboard":
+                SourceChip.Text = "local only";
+                _activeExpandedHeight = 330;
+                RefreshClipboardList();
+                break;
+            case "controls":
+                SourceChip.Text = "quick settings";
+                _activeExpandedHeight = 330;
+                _ = RefreshControlsAsync();
+                break;
+            default:
+                SourceChip.Text = MusicService.Instance.HasSession && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
+                _activeExpandedHeight = _settings.ExpandedHeight;
+                break;
         }
-        else
+        AnimateWidthHeight(_settings.ExpandedWidth, _activeExpandedHeight);
+    }
+
+    private void TabMusic_Click(object sender, RoutedEventArgs e) => SetTab("music");
+    private void TabClipboard_Click(object sender, RoutedEventArgs e) => SetTab("clipboard");
+    private void TabControls_Click(object sender, RoutedEventArgs e) => SetTab("controls");
+
+    // ---------- controls ----------
+
+    private double SliderFraction(Border track, System.Windows.Input.MouseEventArgs e)
+    {
+        var p = e.GetPosition(track);
+        return track.ActualWidth <= 0 ? 0 : Math.Clamp(p.X / track.ActualWidth, 0, 1);
+    }
+
+    private async Task RefreshControlsAsync()
+    {
+        try
         {
-            SourceChip.Text = MusicService.Instance.HasSession && MusicService.Instance.SourceApp.Length > 0 ? MusicService.Instance.SourceApp : "MinePix";
-            _activeExpandedHeight = _settings.ExpandedHeight;
-            AnimateWidthHeight(_settings.ExpandedWidth, _settings.ExpandedHeight);
+            // volume
+            float vol = CoreAudio.GetVolume();
+            bool muted = CoreAudio.GetMuted();
+            if (!_volumeDragging && VolumeTrack.ActualWidth > 0)
+                UpdateVolume(vol, muted, VolumeTrack.ActualWidth);
+
+            // brightness
+            int? brightness = BrightnessService.GetBrightness();
+            if (brightness is null)
+            {
+                BrightnessPercent.Text = "--%";
+                BrightnessHint.Visibility = Visibility.Visible;
+                BrightnessTrack.IsEnabled = false;
+                BrightnessTrack.Opacity = 0.4;
+                BrightnessFill.Width = 0;
+                BrightnessThumb.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                BrightnessHint.Visibility = Visibility.Collapsed;
+                BrightnessTrack.IsEnabled = true;
+                BrightnessTrack.Opacity = 1;
+                BrightnessThumb.Visibility = Visibility.Visible;
+                if (!_brightnessDragging && BrightnessTrack.ActualWidth > 0)
+                    UpdateBrightness(brightness.Value / 100.0, BrightnessTrack.ActualWidth);
+                BrightnessPercent.Text = $"{brightness.Value}%";
+            }
+
+            // radios
+            _radios = await RadioService.GetRadiosAsync();
+            WifiToggle.IsEnabled = _radios.Wifi is not null;
+            BluetoothToggle.IsEnabled = _radios.Bluetooth is not null;
+            WifiToggle.Opacity = _radios.Wifi is not null ? 1 : 0.4;
+            BluetoothToggle.Opacity = _radios.Bluetooth is not null ? 1 : 0.4;
+            WifiToggle.IsChecked = _radios.Wifi is not null && RadioService.IsOn(_radios.Wifi);
+            BluetoothToggle.IsChecked = _radios.Bluetooth is not null && RadioService.IsOn(_radios.Bluetooth);
+        }
+        catch
+        {
+            // controls are best-effort; the panel still renders
         }
     }
 
-    private void TabMusic_Click(object sender, RoutedEventArgs e) => SetTab(false);
-    private void TabClipboard_Click(object sender, RoutedEventArgs e) => SetTab(true);
+    private void UpdateVolume(float vol, bool muted, double trackWidth)
+    {
+        VolumeFill.Width = vol * trackWidth;
+        VolumeThumb.Margin = new Thickness(vol * trackWidth - 9, 0, 0, 0);
+        VolumePercent.Text = muted ? "Muted" : $"{(int)Math.Round(vol * 100)}%";
+        MuteButton.Content = muted ? "\U0001F507" : (vol < 0.5f ? "\U0001F509" : "\U0001F50A");
+    }
+
+    private void UpdateBrightness(double fraction, double trackWidth)
+    {
+        BrightnessFill.Width = fraction * trackWidth;
+        BrightnessThumb.Margin = new Thickness(fraction * trackWidth - 9, 0, 0, 0);
+    }
+
+    private void ApplyVolumeFromEvent(System.Windows.Input.MouseEventArgs e)
+    {
+        if (VolumeTrack.ActualWidth <= 0) return;
+        double fraction = SliderFraction(VolumeTrack, e);
+        CoreAudio.SetVolume((float)fraction);
+        bool muted = CoreAudio.GetMuted() && fraction == 0;
+        if (fraction > 0) { CoreAudio.SetMuted(false); muted = false; }
+        UpdateVolume((float)fraction, CoreAudio.GetMuted(), VolumeTrack.ActualWidth);
+    }
+
+    private void VolumeTrack_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        _volumeDragging = true;
+        VolumeTrack.CaptureMouse();
+        ApplyVolumeFromEvent(e);
+        e.Handled = true;
+    }
+
+    private void VolumeTrack_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_volumeDragging) ApplyVolumeFromEvent(e);
+    }
+
+    private void VolumeTrack_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        _volumeDragging = false;
+        VolumeTrack.ReleaseMouseCapture();
+        ApplyVolumeFromEvent(e);
+    }
+
+    private void ApplyBrightnessFromEvent(System.Windows.Input.MouseEventArgs e)
+    {
+        if (BrightnessTrack.ActualWidth <= 0) return;
+        double fraction = SliderFraction(BrightnessTrack, e);
+        int level = (int)Math.Round(fraction * 100);
+        if (DateTime.Now - _lastBrightnessApply > TimeSpan.FromMilliseconds(150) || level % 5 == 0)
+        {
+            BrightnessService.SetBrightness(level);
+            _lastBrightnessApply = DateTime.Now;
+        }
+        UpdateBrightness(level / 100.0, BrightnessTrack.ActualWidth);
+        BrightnessPercent.Text = $"{level}%";
+    }
+
+    private void BrightnessTrack_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (!BrightnessTrack.IsEnabled) return;
+        _brightnessDragging = true;
+        BrightnessTrack.CaptureMouse();
+        ApplyBrightnessFromEvent(e);
+        e.Handled = true;
+    }
+
+    private void BrightnessTrack_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_brightnessDragging) ApplyBrightnessFromEvent(e);
+    }
+
+    private void BrightnessTrack_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (!_brightnessDragging) return;
+        _brightnessDragging = false;
+        BrightnessTrack.ReleaseMouseCapture();
+        ApplyBrightnessFromEvent(e);
+    }
+
+    private async void MuteButton_Click(object sender, RoutedEventArgs e)
+    {
+        CoreAudio.SetMuted(!CoreAudio.GetMuted());
+        await RefreshControlsAsync();
+    }
+
+    private async void WifiToggle_Click(object sender, RoutedEventArgs e)
+    {
+        bool want = WifiToggle.IsChecked == true;
+        await RadioService.SetAsync(_radios.Wifi, want);
+        await Task.Delay(350);
+        await RefreshControlsAsync();
+    }
+
+    private async void BluetoothToggle_Click(object sender, RoutedEventArgs e)
+    {
+        bool want = BluetoothToggle.IsChecked == true;
+        await RadioService.SetAsync(_radios.Bluetooth, want);
+        await Task.Delay(350);
+        await RefreshControlsAsync();
+    }
 
     // ---------- clipboard ----------
 
