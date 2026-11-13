@@ -47,7 +47,7 @@ public partial class MainWindow : Window
 
         Width = ComputeCollapsedWidth();
         Height = ComputeCollapsedHeight();
-        Top = 0;
+        Top = 14;
         Left = CenteredLeft(Width);
 
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
@@ -132,9 +132,10 @@ public partial class MainWindow : Window
             PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0xB4, 0xFF));
         }
 
-        // ensure window follows the mode's defaults when collapsed
+        // island top offset for "floating" feel
         if (!_expanded)
         {
+            Top = 14;
             Width = ComputeCollapsedWidth();
             Height = ComputeCollapsedHeight();
             Left = CenteredLeft(Width);
@@ -538,6 +539,40 @@ public partial class MainWindow : Window
             BluetoothSubCaption.Text = btOn ? "On" : "Off";
             BluetoothSubCaption.Foreground = Brush(btOn ? "#8AB4FF" : "#6E6E73");
 
+            // mute tile state
+            bool muted2 = CoreAudio.GetMuted();
+            MuteCaption.Text = "Sound";
+            MuteCaption.Foreground = Brush(muted2 ? "#8E8E93" : "#F5F5F7");
+            MuteSubCaption.Text = muted2 ? "Muted" : "On";
+            MuteSubCaption.Foreground = Brush(muted2 ? "#8E8E93" : "#8AB4FF");
+            MuteToggleTile.IsChecked = !muted2;
+
+            // battery + power plan
+            var snap = PowerService.GetSnapshot();
+            var activeStyle = (Style)FindResource("IslandPowerModeButtonActive");
+            var inactiveStyle = (Style)FindResource("IslandPowerModeButton");
+            PowerBatteryButton.Style = snap is not null && snap.ActiveScheme == "Battery saver" ? activeStyle : inactiveStyle;
+            PowerBalancedButton.Style = snap is not null && snap.ActiveScheme == "Balanced" ? activeStyle : inactiveStyle;
+            PowerPerformanceButton.Style = snap is not null && snap.ActiveScheme == "Performance" ? activeStyle : inactiveStyle;
+
+            if (snap is not null)
+            {
+                BatteryGlyph.Text = snap.PluggedIn ? "\U0001F50B" : "\U0001FAAB";
+                BatteryPercent.Text = $"{snap.Percent}%";
+                BatteryStatus.Text = snap.PluggedIn
+                    ? (snap.Percent >= 100 ? "Full " : "Charging")
+                    : snap.Percent <= 20 ? "Low" : "On battery";
+                BatteryPercent.Foreground = Brush(
+                    snap.Percent <= 20 ? "#FF453A" : "#30D158");
+            }
+            else
+            {
+                BatteryGlyph.Text = "—";
+                BatteryPercent.Text = "n/a";
+                BatteryStatus.Text = "No battery";
+                BatteryPercent.Foreground = Brush("#6E6E73");
+            }
+
             // mirror selector state if the selector is open
             if (_selector != SelectorMode.None)
             {
@@ -733,6 +768,33 @@ public partial class MainWindow : Window
         ClipStatus.Visibility = Visibility.Visible;
         _clipStatusTimer.Stop();
         _clipStatusTimer.Start();
+    }
+
+    private async void MuteTile_Click(object sender, RoutedEventArgs e)
+    {
+        CoreAudio.SetMuted(!CoreAudio.GetMuted());
+        await RefreshControlsAsync();
+    }
+
+    private async void PowerBattery_Click(object sender, RoutedEventArgs e)
+    {
+        PowerService.SetScheme("Battery");
+        await Task.Delay(300);
+        await RefreshControlsAsync();
+    }
+
+    private async void PowerBalanced_Click(object sender, RoutedEventArgs e)
+    {
+        PowerService.SetScheme("Balanced");
+        await Task.Delay(300);
+        await RefreshControlsAsync();
+    }
+
+    private async void PowerPerformance_Click(object sender, RoutedEventArgs e)
+    {
+        PowerService.SetScheme("Performance");
+        await Task.Delay(300);
+        await RefreshControlsAsync();
     }
 
     // ---------- selector sheet (Wi-Fi / Bluetooth) ----------
