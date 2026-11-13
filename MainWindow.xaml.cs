@@ -311,10 +311,12 @@ public partial class MainWindow : Window
 
     // ---------- controls ----------
 
-    private double SliderFraction(Border track, System.Windows.Input.MouseEventArgs e)
+    private double VerticalSliderFraction(Border track, System.Windows.Input.MouseEventArgs e)
     {
         var p = e.GetPosition(track);
-        return track.ActualWidth <= 0 ? 0 : Math.Clamp(p.X / track.ActualWidth, 0, 1);
+        if (track.ActualHeight <= 0) return 0;
+        // 1.0 at the top of the fill, 0.0 at the bottom
+        return Math.Clamp(1.0 - (p.Y / track.ActualHeight), 0, 1);
     }
 
     private async Task RefreshControlsAsync()
@@ -324,8 +326,8 @@ public partial class MainWindow : Window
             // volume
             float vol = CoreAudio.GetVolume();
             bool muted = CoreAudio.GetMuted();
-            if (!_volumeDragging && VolumeTrack.ActualWidth > 0)
-                UpdateVolume(vol, muted, VolumeTrack.ActualWidth);
+            if (!_volumeDragging && VolumeTrack.ActualHeight > 0)
+                UpdateVolume(vol, muted, VolumeTrack.ActualHeight);
 
             // brightness
             int? brightness = BrightnessService.GetBrightness();
@@ -335,17 +337,15 @@ public partial class MainWindow : Window
                 BrightnessHint.Visibility = Visibility.Visible;
                 BrightnessTrack.IsEnabled = false;
                 BrightnessTrack.Opacity = 0.4;
-                BrightnessFill.Width = 0;
-                BrightnessThumb.Visibility = Visibility.Collapsed;
+                BrightnessFill.Height = 0;
             }
             else
             {
                 BrightnessHint.Visibility = Visibility.Collapsed;
                 BrightnessTrack.IsEnabled = true;
                 BrightnessTrack.Opacity = 1;
-                BrightnessThumb.Visibility = Visibility.Visible;
-                if (!_brightnessDragging && BrightnessTrack.ActualWidth > 0)
-                    UpdateBrightness(brightness.Value / 100.0, BrightnessTrack.ActualWidth);
+                if (!_brightnessDragging && BrightnessTrack.ActualHeight > 0)
+                    UpdateBrightness(brightness.Value / 100.0, BrightnessTrack.ActualHeight);
                 BrightnessPercent.Text = $"{brightness.Value}%";
             }
 
@@ -364,28 +364,25 @@ public partial class MainWindow : Window
         }
     }
 
-    private void UpdateVolume(float vol, bool muted, double trackWidth)
+    private void UpdateVolume(float vol, bool muted, double trackHeight)
     {
-        VolumeFill.Width = vol * trackWidth;
-        VolumeThumb.Margin = new Thickness(vol * trackWidth - 9, 0, 0, 0);
+        VolumeFill.Height = vol * trackHeight;
         VolumePercent.Text = muted ? "Muted" : $"{(int)Math.Round(vol * 100)}%";
         MuteButton.Content = muted ? "\U0001F507" : (vol < 0.5f ? "\U0001F509" : "\U0001F50A");
     }
 
-    private void UpdateBrightness(double fraction, double trackWidth)
+    private void UpdateBrightness(double fraction, double trackHeight)
     {
-        BrightnessFill.Width = fraction * trackWidth;
-        BrightnessThumb.Margin = new Thickness(fraction * trackWidth - 9, 0, 0, 0);
+        BrightnessFill.Height = fraction * trackHeight;
     }
 
     private void ApplyVolumeFromEvent(System.Windows.Input.MouseEventArgs e)
     {
-        if (VolumeTrack.ActualWidth <= 0) return;
-        double fraction = SliderFraction(VolumeTrack, e);
+        if (VolumeTrack.ActualHeight <= 0) return;
+        double fraction = VerticalSliderFraction(VolumeTrack, e);
         CoreAudio.SetVolume((float)fraction);
-        bool muted = CoreAudio.GetMuted() && fraction == 0;
-        if (fraction > 0) { CoreAudio.SetMuted(false); muted = false; }
-        UpdateVolume((float)fraction, CoreAudio.GetMuted(), VolumeTrack.ActualWidth);
+        if (fraction > 0) CoreAudio.SetMuted(false);
+        UpdateVolume((float)fraction, CoreAudio.GetMuted(), VolumeTrack.ActualHeight);
     }
 
     private void VolumeTrack_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -410,15 +407,15 @@ public partial class MainWindow : Window
 
     private void ApplyBrightnessFromEvent(System.Windows.Input.MouseEventArgs e)
     {
-        if (BrightnessTrack.ActualWidth <= 0) return;
-        double fraction = SliderFraction(BrightnessTrack, e);
+        if (BrightnessTrack.ActualHeight <= 0) return;
+        double fraction = VerticalSliderFraction(BrightnessTrack, e);
         int level = (int)Math.Round(fraction * 100);
         if (DateTime.Now - _lastBrightnessApply > TimeSpan.FromMilliseconds(150) || level % 5 == 0)
         {
             BrightnessService.SetBrightness(level);
             _lastBrightnessApply = DateTime.Now;
         }
-        UpdateBrightness(level / 100.0, BrightnessTrack.ActualWidth);
+        UpdateBrightness(level / 100.0, BrightnessTrack.ActualHeight);
         BrightnessPercent.Text = $"{level}%";
     }
 

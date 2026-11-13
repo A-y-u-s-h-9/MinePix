@@ -17,7 +17,7 @@
     <Window.Resources>
         <!-- iOS-style control tiles -->
         <Style x:Key="IslandMasterTile" TargetType="Border">
-            <Setter Property="Background" Value="#3814171C"/>
+            <Setter Property="Background" Value="#AD20232A"/>
             <Setter Property="CornerRadius" Value="18"/>
             <Setter Property="BorderBrush" Value="#14FFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -82,13 +82,6 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-
-        <!-- IslandSlider: thick iOS-style bar with a thumb -->
-        <Style x:Key="IslandSliderTrack" TargetType="Border">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Cursor" Value="Hand"/>
         </Style>
 
         <Style TargetType="ScrollBar">
@@ -533,99 +526,83 @@
                     </Grid>
                 </Border>
 
-                <!-- Controls panel (iOS style) -->
+                <!-- Controls panel (iOS style): two tall sliders + circle grid -->
                 <Grid Grid.Row="2" x:Name="ControlsPanel" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- volume tile -->
-                    <Border Grid.Column="0" Grid.ColumnSpan="2" Margin="2,0,2,8" Style="{StaticResource IslandMasterTile}">
+                    <!-- volume slider tile -->
+                    <Border Grid.Column="0" Margin="2,0,1,0" Style="{StaticResource IslandMasterTile}" x:Name="VolumeTile">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button x:Name="MuteButton" Content="&#x1F50A;" Style="{StaticResource IslandFlatButton}"
-                                            FontSize="15" Padding="4,2" Click="MuteButton_Click" ToolTip="Mute / unmute"/>
-                                    <TextBlock Text="Volume" Foreground="#F5F5F7" FontFamily="Segoe UI Semibold"
-                                               FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBlock x:Name="VolumePercent" Text="0%" Foreground="#8E8E93" FontFamily="Segoe UI"
-                                           FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                            <Border Grid.Row="1" Style="{StaticResource IslandSliderTrack}" x:Name="VolumeTrack"
-                                    VerticalAlignment="Center" MouseDown="VolumeTrack_MouseDown"
+                            <TextBlock Grid.Row="0" x:Name="VolumePercent" Text="0%" Foreground="#8E8E93"
+                                       FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,6"/>
+                            <Border Grid.Row="1" x:Name="VolumeTrack" Width="52" CornerRadius="14"
+                                    Background="#141B22" Cursor="Hand" HorizontalAlignment="Center"
+                                    ClipToBounds="True" MouseDown="VolumeTrack_MouseDown"
                                     MouseMove="VolumeTrack_MouseMove" MouseUp="VolumeTrack_MouseUp">
-                                <Grid VerticalAlignment="Center">
-                                    <Border Height="8" CornerRadius="4" Background="#33FFFFFF"/>
-                                    <Border x:Name="VolumeFill" Height="8" CornerRadius="4" Background="#8AB4FF"
-                                            HorizontalAlignment="Left" Width="0"/>
-                                    <Ellipse x:Name="VolumeThumb" Width="18" Height="18" Fill="#F5F5F7"
-                                             HorizontalAlignment="Left" VerticalAlignment="Center"
-                                             Margin="-9,0,0,0"/>
-                                </Grid>
+                                <Border x:Name="VolumeFill" Background="#F5F5F7" CornerRadius="12"
+                                        VerticalAlignment="Bottom" Height="0"/>
                             </Border>
+                            <Button Grid.Row="2" x:Name="MuteButton" Content="&#x1F50A;" Style="{StaticResource IslandFlatButton}"
+                                    FontSize="20" Padding="4,2" Margin="0,6,0,0" Click="MuteButton_Click"
+                                    ToolTip="Mute / unmute"/>
                         </Grid>
                     </Border>
 
-                    <!-- brightness tile -->
-                    <Border Grid.Row="1" Grid.Column="0" Margin="2,8,1,0" Style="{StaticResource IslandMasterTile}" x:Name="BrightnessTile">
+                    <!-- brightness slider tile -->
+                    <Border Grid.Column="1" Margin="1,0,1,0" Style="{StaticResource IslandMasterTile}" x:Name="BrightnessTile">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0" Margin="0,0,0,6">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="&#x2600;" FontFamily="Segoe UI Symbol" FontSize="18"
-                                               Foreground="#FFD60A" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Brightness" Foreground="#F5F5F7" FontFamily="Segoe UI Semibold"
-                                               FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBlock x:Name="BrightnessPercent" Text="--%" Foreground="#8E8E93" FontFamily="Segoe UI"
-                                           FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                            <Border Grid.Row="1" Style="{StaticResource IslandSliderTrack}" x:Name="BrightnessTrack"
-                                    MouseDown="BrightnessTrack_MouseDown" MouseMove="BrightnessTrack_MouseMove"
-                                    MouseUp="BrightnessTrack_MouseUp" Margin="0,4,0,0">
-                                <Grid VerticalAlignment="Center">
-                                    <Border Height="8" CornerRadius="4" Background="#33FFFFFF"/>
-                                    <Border x:Name="BrightnessFill" Height="8" CornerRadius="4" Background="#FFD60A"
-                                            HorizontalAlignment="Left" Width="0"/>
-                                    <Ellipse x:Name="BrightnessThumb" Width="18" Height="18" Fill="#F5F5F7"
-                                             HorizontalAlignment="Left" VerticalAlignment="Center"
-                                             Margin="-9,0,0,0"/>
-                                </Grid>
+                            <TextBlock Grid.Row="0" x:Name="BrightnessPercent" Text="--%" Foreground="#8E8E93"
+                                       FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,6"/>
+                            <Border Grid.Row="1" x:Name="BrightnessTrack" Width="52" CornerRadius="14"
+                                    Background="#141B22" Cursor="Hand" HorizontalAlignment="Center"
+                                    ClipToBounds="True" MouseDown="BrightnessTrack_MouseDown"
+                                    MouseMove="BrightnessTrack_MouseMove" MouseUp="BrightnessTrack_MouseUp">
+                                <Border x:Name="BrightnessFill" Background="#FFD60A" CornerRadius="12"
+                                        VerticalAlignment="Bottom" Height="0"/>
                             </Border>
-                            <TextBlock x:Name="BrightnessHint" Grid.Row="2" Text="Not available on this monitor"
+                            <TextBlock Grid.Row="2" Text="&#x2600;" FontFamily="Segoe UI Symbol" FontSize="20"
+                                       Foreground="#FFD60A" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                            <TextBlock x:Name="BrightnessHint" Grid.Row="1" Text="Monitor-controlled"
                                        Foreground="#6E6E73" FontFamily="Segoe UI" FontSize="10"
-                                       Visibility="Collapsed" Margin="0,6,0,0"/>
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="Collapsed"/>
                         </Grid>
                     </Border>
 
-                    <!-- toggles tile -->
-                    <Border Grid.Row="1" Grid.Column="1" Margin="1,8,2,0" Style="{StaticResource IslandMasterTile}">
+                    <!-- circle grid -->
+                    <Border Grid.Column="2" Margin="1,0,2,0" Style="{StaticResource IslandMasterTile}">
                         <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <ToggleButton x:Name="WifiToggle" Grid.Column="0" Content="Wi-Fi" Tag="Wi-Fi"
-                                          Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"
-                                          FontFamily="Segoe UI Semibold" FontSize="15"/>
-                            <ToggleButton x:Name="BluetoothToggle" Grid.Column="1" Content="BT" Tag="Bluetooth"
+                            <ToggleButton x:Name="WifiToggle" Grid.Row="0" Grid.Column="0" Content="Wi-Fi"
+                                          Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"/>
+                            <ToggleButton x:Name="BluetoothToggle" Grid.Row="0" Grid.Column="1" Content="BT"
                                           Style="{StaticResource IslandCircleToggle}" Click="BluetoothToggle_Click"
-                                          FontFamily="Segoe UI Semibold" FontSize="17"/>
+                                          FontFamily="Segoe UI Semibold" FontSize="18"/>
+                            <Button Grid.Row="1" Grid.Column="0" Content="&#x2708;" Tag="Soon"
+                                    Style="{StaticResource IslandCircleSoon}"/>
+                            <Button Grid.Row="1" Grid.Column="1" Content="&#x263E;" Tag="Soon"
+                                    Style="{StaticResource IslandCircleSoon}"/>
                         </Grid>
                     </Border>
                 </Grid>
