@@ -522,76 +522,81 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- volume slider tile -->
-                    <Border Grid.Column="0" Margin="1,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="VolumeTile">
+                    <!-- one tile, both sliders -->
+                    <Border Grid.Column="0" Margin="1,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="SlidersTile">
                         <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" x:Name="VolumePercent" Text="0%" Foreground="#8E8E93"
-                                       FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,6"/>
-                            <Border Grid.Row="1" x:Name="VolumeTrack" Width="52" CornerRadius="14"
-                                    Background="#141B22" Cursor="Hand" HorizontalAlignment="Center"
-                                    ClipToBounds="True" MouseDown="VolumeTrack_MouseDown"
-                                    MouseMove="VolumeTrack_MouseMove" MouseUp="VolumeTrack_MouseUp">
-                                <Border x:Name="VolumeFill" Background="#F5F5F7" CornerRadius="12"
-                                        VerticalAlignment="Bottom" Height="0"/>
-                            </Border>
-                            <Button Grid.Row="2" x:Name="MuteButton" Content="&#x1F50A;" Style="{StaticResource IslandFlatButton}"
-                                    FontSize="20" Padding="4,2" Margin="0,6,0,0" Click="MuteButton_Click"
-                                    ToolTip="Mute / unmute"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- brightness slider tile -->
-                    <Border Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="BrightnessTile">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" x:Name="BrightnessPercent" Text="--%" Foreground="#8E8E93"
-                                       FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,6"/>
-                            <Border Grid.Row="1" x:Name="BrightnessTrack" Width="52" CornerRadius="14"
-                                    Background="#141B22" Cursor="Hand" HorizontalAlignment="Center"
-                                    ClipToBounds="True" MouseDown="BrightnessTrack_MouseDown"
-                                    MouseMove="BrightnessTrack_MouseMove" MouseUp="BrightnessTrack_MouseUp">
-                                <Border x:Name="BrightnessFill" Background="#FFD60A" CornerRadius="12"
-                                        VerticalAlignment="Bottom" Height="0"/>
-                            </Border>
-                            <TextBlock Grid.Row="2" Text="&#x2600;" FontFamily="Segoe UI Symbol" FontSize="20"
-                                       Foreground="#FFD60A" HorizontalAlignment="Center" Margin="0,6,0,0"/>
-                            <TextBlock x:Name="BrightnessHint" Grid.Row="1" Text="Monitor-controlled"
-                                       Foreground="#6E6E73" FontFamily="Segoe UI" FontSize="10"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Visibility="Collapsed"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- circle grid: colourless circles + state captions -->
-                    <Border Grid.Column="2" Margin="0,0,1,0" Style="{StaticResource IslandMasterTile}">
-                        <Grid VerticalAlignment="Center">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <ToggleButton x:Name="WifiToggle" Content="Wi-Fi"
-                                              Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"/>
-                                <TextBlock x:Name="WifiCaption" Text="Wi-Fi" Style="{StaticResource IslandCaption}" Margin="0,6,0,0"/>
-                                <TextBlock x:Name="WifiSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <ToggleButton x:Name="BluetoothToggle" Content="BT"
-                                              Style="{StaticResource IslandCircleToggle}" Click="BluetoothToggle_Click"
-                                              FontFamily="Segoe UI Semibold" FontSize="18"/>
-                                <TextBlock x:Name="BluetoothCaption" Text="Bluetooth" Style="{StaticResource IslandCaption}" Margin="0,6,0,0"/>
-                                <TextBlock x:Name="BluetoothSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
-                            </StackPanel>
+
+                            <!-- volume -->
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" x:Name="VolumePercent" Text="0%" Foreground="#8E8E93"
+                                           FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,6"/>
+                                <Border Grid.Row="1" x:Name="VolumeTrack" Width="46" CornerRadius="13"
+                                        Background="#141B22" Cursor="Hand" HorizontalAlignment="Center"
+                                        ClipToBounds="True" MouseDown="VolumeTrack_MouseDown"
+                                        MouseMove="VolumeTrack_MouseMove" MouseUp="VolumeTrack_MouseUp">
+                                    <Border x:Name="VolumeFill" Background="#F5F5F7" CornerRadius="11"
+                                            VerticalAlignment="Bottom" Height="0"/>
+                                </Border>
+                                <Button Grid.Row="2" x:Name="MuteButton" Content="&#x1F50A;" Style="{StaticResource IslandFlatButton}"
+                                        FontSize="18" Padding="4,2" Margin="0,6,0,0" Click="MuteButton_Click"
+                                        ToolTip="Mute / unmute" HorizontalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- brightness -->
+                            <Grid Grid.Column="1">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" x:Name="BrightnessPercent" Text="--%" Foreground="#8E8E93"
+                                           FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,6"/>
+                                <Border Grid.Row="1" x:Name="BrightnessTrack" Width="46" CornerRadius="13"
+                                        Background="#141B22" Cursor="Hand" HorizontalAlignment="Center"
+                                        ClipToBounds="True" MouseDown="BrightnessTrack_MouseDown"
+                                        MouseMove="BrightnessTrack_MouseMove" MouseUp="BrightnessTrack_MouseUp">
+                                    <Border x:Name="BrightnessFill" Background="#FFD60A" CornerRadius="11"
+                                            VerticalAlignment="Bottom" Height="0"/>
+                                </Border>
+                                <TextBlock Grid.Row="2" Text="&#x2600;" FontFamily="Segoe UI Symbol" FontSize="19"
+                                           Foreground="#FFD60A" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                <TextBlock x:Name="BrightnessHint" Grid.Row="1" Text="Monitor-controlled"
+                                           Foreground="#6E6E73" FontFamily="Segoe UI" FontSize="9"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="Collapsed"/>
+                            </Grid>
                         </Grid>
+                    </Border>
+
+                    <!-- Wi-Fi tile -->
+                    <Border Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="WifiTile">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <ToggleButton x:Name="WifiToggle" Content="&#x1F4F6;" FontFamily="Segoe UI Emoji"
+                                          Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"
+                                          HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="WifiCaption" Text="Wi-Fi" Style="{StaticResource IslandCaption}" Margin="0,8,0,0"/>
+                            <TextBlock x:Name="WifiSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Bluetooth tile -->
+                    <Border Grid.Column="2" Margin="0,0,1,0" Style="{StaticResource IslandMasterTile}" x:Name="BluetoothTile">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <ToggleButton x:Name="BluetoothToggle" Content="BT"
+                                          Style="{StaticResource IslandCircleToggle}" Click="BluetoothToggle_Click"
+                                          FontFamily="Segoe UI Semibold" FontSize="17" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="BluetoothCaption" Text="Bluetooth" Style="{StaticResource IslandCaption}" Margin="0,8,0,0"/>
+                            <TextBlock x:Name="BluetoothSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
+                        </StackPanel>
                     </Border>
                 </Grid>
 
