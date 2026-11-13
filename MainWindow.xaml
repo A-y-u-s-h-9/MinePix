@@ -221,8 +221,8 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
@@ -251,7 +251,7 @@
                 <!-- Music card -->
                 <Border Grid.Row="2" x:Name="MusicCard" Background="#3814171C" CornerRadius="14"
                         BorderBrush="#14FFFFFF" BorderThickness="1"
-                        Padding="10" Visibility="Collapsed">
+                        Padding="10" VerticalAlignment="Top" Visibility="Collapsed">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="64"/>
@@ -317,7 +317,10 @@
                 </Border>
 
                 <!-- Clipboard panel -->
-                <Grid Grid.Row="2" x:Name="ClipPanel" Visibility="Collapsed">
+                <Border Grid.Row="2" x:Name="ClipPanel" Background="#A626272C" CornerRadius="14"
+                        BorderBrush="#14FFFFFF" BorderThickness="1"
+                        Padding="8" Visibility="Collapsed">
+                    <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -414,10 +417,11 @@
                                     Margin="6,0,0,0" Click="ClipClearAll_Click"/>
                         </StackPanel>
                     </Grid>
-                </Grid>
+                    </Grid>
+                </Border>
 
                 <!-- Feature stack (placeholders until M5+ land) -->
-                <WrapPanel Grid.Row="3" VerticalAlignment="Bottom">
+                <WrapPanel Grid.Row="3" VerticalAlignment="Center">
                     <ToggleButton x:Name="TabMusicButton" Content="Music" Style="{StaticResource IslandTabButton}"
                                   IsChecked="True" Click="TabMusic_Click"/>
                     <ToggleButton x:Name="TabClipboardButton" Content="Clipboard" Style="{StaticResource IslandTabButton}"

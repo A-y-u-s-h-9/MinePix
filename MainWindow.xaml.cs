@@ -88,7 +88,7 @@ public partial class MainWindow : Window
         {
             "glass" => "#8026313D", // glass — bluish, ~50% alpha, readable over bright scenes
             "black" => "#B0100F11", // black — mostly opaque, still a hint of the backdrop
-            _ => "#571F1E24",       // graphite — ~34% alpha, real glass but text stays readable
+            _ => "#661F1F25",       // graphite — ~40% alpha, still glassy, rows stay readable
         };
 
         Island.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));
