@@ -116,20 +116,30 @@ public partial class MainWindow : Window
     {
         if (_settings.UseDynamicIsland)
         {
-            Island.CornerRadius = new CornerRadius(0, 0, 22, 22);
+            // a full capsule: dynamic island shape, not a notch
+            Resources["PillRadius"] = new CornerRadius(22);
             PillDot.Width = 10; PillDot.Height = 10;
             PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x1F));
         }
         else
         {
-            Island.CornerRadius = new CornerRadius(0, 0, 18, 18);
+            // classic: flat top, rounded bottom
+            Resources["PillRadius"] = new CornerRadius(0, 0, 18, 18);
             PillDot.Width = 8; PillDot.Height = 8;
             PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0xB4, 0xFF));
         }
+
+        // ensure window follows the mode's defaults when collapsed
+        if (!_expanded)
+        {
+            Width = ComputeCollapsedWidth();
+            Height = ComputeCollapsedHeight();
+            Left = CenteredLeft(Width);
+        }
     }
 
-    private double ComputeCollapsedWidth()  => _settings.UseDynamicIsland ? Math.Max(_settings.CollapsedWidth, 360) : _settings.CollapsedWidth;
-    private double ComputeCollapsedHeight() => _settings.UseDynamicIsland ? Math.Max(_settings.CollapsedHeight, 44) : _settings.CollapsedHeight;
+    private double ComputeCollapsedWidth()  => _settings.CollapsedWidth;
+    private double ComputeCollapsedHeight() => _settings.UseDynamicIsland ? 44 : _settings.CollapsedHeight;
 
     private static double CenteredLeft(double width) => (SystemParameters.PrimaryScreenWidth - width) / 2;
 
@@ -162,13 +172,34 @@ public partial class MainWindow : Window
     /// rejected on this stack — they force the layered WPF window to composite opaque.
     /// Pure per-pixel alpha gives the cleanest true-glass look; tint is kept low.
     /// </summary>
+    /// <summary>
+    /// Returns true when the current system App Theme (Windows Personalization) is light.
+    /// Falls back to dark on any error or older builds.
+    /// </summary>
+    private static bool IsAppLightTheme()
+    {
+        try
+        {
+            var v = Microsoft.Win32.Registry.GetValue(
+                @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+                "AppsUseLightTheme", 0);
+            return v is int i && i == 1;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private void ApplyTheme()
     {
+        bool light = IsAppLightTheme();
+
         var border = _settings.Theme?.ToLowerInvariant() switch
         {
             "glass" => "#3D2B3344",   // classic glass — thin, airy
             "black" => "#BF100F11",   // black — mostly opaque
-            _ => "#45222429",          // graphite — liquid glass, ~27% alpha, warm tint
+            _ => light ? "#33FFFFFF" : "#45222429",   // graphite — adapt to light/dark wallpaper
         };
 
         Island.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(border));
@@ -254,7 +285,7 @@ public partial class MainWindow : Window
     {
         bool has = MusicService.Instance.HasSession;
 
-        MusicCard.Visibility = _tab == "music" && has ? Visibility.Visible : Visibility.Collapsed;
+        MusicCard.Visibility = _tab == "music" ? Visibility.Visible : Visibility.Collapsed;
 
         if (has)
         {
@@ -275,6 +306,17 @@ public partial class MainWindow : Window
 
             PlayPauseButton.Content = MusicService.Instance.IsPlaying ? "\u23F8" : "\u25B6";
             MusicDuration.Text = MusicService.FormatTime(MusicService.Instance.Duration);
+        }
+        else
+        {
+            MusicTitle.Text = "Nothing playing";
+            MusicArtist.Text = "Start something in any media app";
+            MusicDuration.Text = "0:00";
+            MusicPos.Text = "0:00";
+            SeekFill.Width = 0;
+            PlayPauseButton.Content = "\u25B6";
+            MusicArt.Visibility = Visibility.Collapsed;
+            MusicArtPlaceholder.Visibility = Visibility.Visible;
         }
 
         UpdatePillMusicState();
@@ -683,8 +725,8 @@ public partial class MainWindow : Window
         MusicCard.Visibility = Visibility.Collapsed;
         ClipPanel.Visibility = Visibility.Collapsed;
         ControlsPanel.Visibility = Visibility.Collapsed;
-        IconBar.Visibility = Visibility.Collapsed;
-        HintText.Visibility = Visibility.Collapsed;
+        IconBarCentered.Visibility = Visibility.Collapsed;
+        IconSettings.Visibility = Visibility.Collapsed;
 
         SelectorPanel.Visibility = Visibility.Visible;
         SelectorTitle.Text = mode == SelectorMode.Wifi ? "Wi-Fi" : "Bluetooth";
@@ -720,8 +762,8 @@ public partial class MainWindow : Window
         SelectorPanel.Visibility = Visibility.Collapsed;
 
         // restore tab strip + hint
-        IconBar.Visibility = Visibility.Visible;
-        HintText.Visibility = Visibility.Visible;
+        IconBarCentered.Visibility = Visibility.Visible;
+        IconSettings.Visibility = Visibility.Visible;
 
         // reapply current tab content
         SetTab(_tab);

@@ -139,6 +139,8 @@
             <GradientStop Color="#08FFFFFF" Offset="1"/>
         </LinearGradientBrush>
 
+        <CornerRadius x:Key="PillRadius">18</CornerRadius>
+
         <!-- flat island buttons -->
         <Style x:Key="IslandTabButton" TargetType="ToggleButton">
             <Setter Property="Background" Value="#14FFFFFF"/>
@@ -358,7 +360,7 @@
     </Window.Resources>
 
     <Border x:Name="Island"
-            CornerRadius="0,0,18,18"
+            CornerRadius="{StaticResource PillRadius}"
             Background="#591E1D23"
             BorderBrush="{StaticResource BottomRimBrush}"
             BorderThickness="0,0,0,1"
@@ -370,16 +372,16 @@
         <Grid>
             <!-- ===== liquid glass layers ===== -->
             <!-- top-edge bevel — the "glass thickness" -->
-            <Border Margin="0" CornerRadius="0,0,18,18" Background="{StaticResource TopEdgeBrush}"
+            <Border x:Name="GlassRim" Margin="0" CornerRadius="{StaticResource PillRadius}" Background="{StaticResource TopEdgeBrush}"
                     IsHitTestVisible="False" VerticalAlignment="Top" Height="2"/>
             <!-- horizontal glare — light sliding along the glass -->
-            <Border Margin="0" CornerRadius="0" Background="{StaticResource TopGlareBrush}"
-                    IsHitTestVisible="False" VerticalAlignment="Top" Height="40"/>
+            <Border x:Name="GlassTopGlare" Margin="0" CornerRadius="{StaticResource PillRadius}" Background="{StaticResource TopGlareBrush}"
+                    IsHitTestVisible="False" VerticalAlignment="Top" Height="44"/>
             <!-- side rims -->
-            <Border Margin="0" Background="{StaticResource SideRimLeft}"
-                    IsHitTestVisible="False" HorizontalAlignment="Left" Width="1"/>
-            <Border Margin="0" Background="{StaticResource SideRimRight}"
-                    IsHitTestVisible="False" HorizontalAlignment="Right" Width="1"/>
+            <Border x:Name="GlassLeftRim" Margin="0" Background="{StaticResource SideRimLeft}"
+                    IsHitTestVisible="False" HorizontalAlignment="Left" Width="1.5"/>
+            <Border x:Name="GlassRightRim" Margin="0" Background="{StaticResource SideRimRight}"
+                    IsHitTestVisible="False" HorizontalAlignment="Right" Width="1.5"/>
             <!-- soft top glow — blurred glare under the "bevel" -->
             <Border Margin="0" Background="{StaticResource SpecularBlob}"
                     IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Top"
@@ -431,7 +433,6 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
@@ -445,12 +446,14 @@
                                    Margin="8,0,0,0"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="IconBar">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="IconBarCentered">
                         <Button x:Name="IconMusic"     Content="&#x266A;" Style="{StaticResource IslandIconButton}" Click="IconMusic_Click"     Tag="music"     ToolTip="Music"/>
                         <Button x:Name="IconClipboard" Content="&#x1F4CB;" Style="{StaticResource IslandIconButton}" Click="IconClipboard_Click" Tag="clipboard" ToolTip="Clipboard"/>
-                        <Button x:Name="IconControls"  Content="&#x2503;" Style="{StaticResource IslandIconButton}" Click="IconControls_Click"  Tag="controls"  ToolTip="Controls"/>
-                        <Button x:Name="IconSettings"  Content="&#x2699;" Style="{StaticResource IslandIconButton}" Click="IconSettings_Click"  Tag="settings"  ToolTip="Settings"/>
+                        <Button x:Name="IconControls"  Content="&#x1F39A;" Style="{StaticResource IslandIconButton}" Click="IconControls_Click"  Tag="controls"  ToolTip="Controls"/>
                     </StackPanel>
+                    <Button x:Name="IconSettings" Content="&#x2699;" Style="{StaticResource IslandIconButton}"
+                            Click="IconSettings_Click" Tag="settings" ToolTip="Settings"
+                            HorizontalAlignment="Right" VerticalAlignment="Center"/>
                 </Grid>
 
                 <Border Grid.Row="1" Height="1" Background="#1FFFFFFF" Margin="0,8"/>
@@ -482,10 +485,10 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock x:Name="MusicTitle" Text="" Foreground="#F5F5F7"
+                            <TextBlock x:Name="MusicTitle" Text="Nothing playing" Foreground="#F5F5F7"
                                        FontFamily="Segoe UI Semibold" FontSize="13"
                                        TextTrimming="CharacterEllipsis"/>
-                            <TextBlock x:Name="MusicArtist" Grid.Row="1" Text="" Foreground="#A9A9AF"
+                            <TextBlock x:Name="MusicArtist" Grid.Row="1" Text="Start something in any media app" Foreground="#A9A9AF"
                                        FontFamily="Segoe UI" FontSize="11" Margin="0,1,0,0"
                                        TextTrimming="CharacterEllipsis"/>
 
@@ -822,16 +825,8 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-
-                <!-- hint -->
-                <TextBlock Grid.Row="3" x:Name="HintText"
-                           Text="Hover to browse · pointer away to collapse"
-                           Foreground="#6E6E73"
-                           FontFamily="Segoe UI"
-                           FontSize="10"
-                           HorizontalAlignment="Center"
-                           Margin="0,6,0,0"/>
             </Grid>
         </Grid>
     </Border>
 </Window>
+

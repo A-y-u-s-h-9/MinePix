@@ -17,7 +17,7 @@ public sealed class Settings
     public int ClipboardMaxItems { get; set; } = 100;
     public double CollapsedWidth { get; set; } = 220;
     public double CollapsedHeight { get; set; } = 34;
-    public double ExpandedWidth { get; set; } = 560;
+    public double ExpandedWidth { get; set; } = 480;
     public double ExpandedHeight { get; set; } = 235;
     public int CollapseDelayMs { get; set; } = 250;
 
