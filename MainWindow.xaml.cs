@@ -447,11 +447,11 @@ public partial class MainWindow : Window
         switch (tab)
         {
             case "clipboard":
-                _activeExpandedHeight = 330;
+                _activeExpandedHeight = _settings.ExpandedHeight;
                 RefreshClipboardList();
                 break;
             case "controls":
-                _activeExpandedHeight = 330;
+                _activeExpandedHeight = _settings.ExpandedHeight;
                 _ = RefreshControlsAsync();
                 break;
             case "music":
@@ -582,9 +582,18 @@ public partial class MainWindow : Window
                 SetSelectorRadioSwitchState();
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // controls are best-effort; the panel still renders
+            try
+            {
+                var dir = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MinePix");
+                System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(dir, "controls.log"),
+                    $"{DateTime.Now:s} RefreshControlsAsync: {ex}{Environment.NewLine}");
+            }
+            catch { }
         }
     }
 

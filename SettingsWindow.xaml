@@ -6,8 +6,8 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="NoResize"
-        Background="Transparent"
-        AllowsTransparency="True">
+        Background="#1F161A21"
+        AllowsTransparency="False">
     <Window.Resources>
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#8E8E93"/>
