@@ -133,12 +133,6 @@
         </Style>
 
         <!-- bottom edge: light pooling along the notch, bright at center -->
-        <LinearGradientBrush x:Key="BottomRimBrush" StartPoint="0,0.5" EndPoint="1,0.5">
-            <GradientStop Color="#08FFFFFF" Offset="0"/>
-            <GradientStop Color="#2EFFFFFF" Offset="0.5"/>
-            <GradientStop Color="#08FFFFFF" Offset="1"/>
-        </LinearGradientBrush>
-
         <CornerRadius x:Key="PillRadius">18</CornerRadius>
 
         <!-- liquid glass brushes -->
@@ -213,14 +207,6 @@
         </LinearGradientBrush>
         <LinearGradientBrush x:Key="TopEdgeBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#55FFFFFF" Offset="0"/>
-            <GradientStop Color="#00000000" Offset="1"/>
-        </LinearGradientBrush>
-        <LinearGradientBrush x:Key="SideRimLeft" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#30FFFFFF" Offset="0"/>
-            <GradientStop Color="#00000000" Offset="1"/>
-        </LinearGradientBrush>
-        <LinearGradientBrush x:Key="SideRimRight" StartPoint="1,0" EndPoint="0,0">
-            <GradientStop Color="#30FFFFFF" Offset="0"/>
             <GradientStop Color="#00000000" Offset="1"/>
         </LinearGradientBrush>
         <RadialGradientBrush x:Key="SpecularBlob" Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
@@ -362,8 +348,6 @@
     <Border x:Name="Island"
             CornerRadius="{DynamicResource PillRadius}"
             Background="#591E1D23"
-            BorderBrush="{StaticResource BottomRimBrush}"
-            BorderThickness="0,0,0,1"
             Padding="16,0"
             ClipToBounds="True">
         <Border.Effect>
@@ -377,11 +361,7 @@
             <!-- horizontal glare — light sliding along the glass -->
             <Border x:Name="GlassTopGlare" Margin="0" Background="{StaticResource TopGlareBrush}"
                     IsHitTestVisible="False" VerticalAlignment="Top" Height="44"/>
-            <!-- side rims -->
-            <Border x:Name="GlassLeftRim" Margin="0" Background="{StaticResource SideRimLeft}"
-                    IsHitTestVisible="False" HorizontalAlignment="Left" Width="1.5"/>
-            <Border x:Name="GlassRightRim" Margin="0" Background="{StaticResource SideRimRight}"
-                    IsHitTestVisible="False" HorizontalAlignment="Right" Width="1.5"/>
+            <!-- side rims removed — they chopped at rounded corners -->
             <!-- soft top glow — blurred glare under the "bevel" -->
             <Border Margin="0" Background="{StaticResource SpecularBlob}"
                     IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Top"
@@ -455,8 +435,6 @@
                             Click="IconSettings_Click" Tag="settings" ToolTip="Settings"
                             HorizontalAlignment="Right" VerticalAlignment="Center"/>
                 </Grid>
-
-                <Border Grid.Row="1" Height="1" Background="#1FFFFFFF" Margin="0,8"/>
 
                 <!-- Music card -->
                 <Border Grid.Row="2" x:Name="MusicCard" Background="#3814171C" CornerRadius="14"
@@ -829,5 +807,6 @@
         </Grid>
     </Border>
 </Window>
+
 
 
