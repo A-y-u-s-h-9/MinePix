@@ -195,7 +195,8 @@ public sealed class MusicService
         if (tl is null) return;
         var seconds = tl.EndTime.TotalSeconds;
         if (seconds <= 0) return;
-        await _session.TryChangePlaybackPositionAsync((long)(fraction * seconds * 1000));
+        // WinRT takes 100-nanosecond ticks, not milliseconds
+        await _session.TryChangePlaybackPositionAsync((long)(fraction * seconds * TimeSpan.TicksPerSecond));
     }
 
     private static string PrettySourceName(string? id)
