@@ -15,34 +15,24 @@
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave">
     <Window.Resources>
-        <!-- Diagonal sheen, like light catching a water surface -->
-        <LinearGradientBrush x:Key="SheenBrush" StartPoint="0,0" EndPoint="0.75,1">
-            <GradientStop Color="#3DFFFFFF" Offset="0"/>
-            <GradientStop Color="#14FFFFFF" Offset="0.22"/>
-            <GradientStop Color="#00FFFFFF" Offset="0.45"/>
-        </LinearGradientBrush>
-        <!-- Softer, even rim -->
-        <LinearGradientBrush x:Key="RimBrush" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#2EFFFFFF" Offset="0"/>
-            <GradientStop Color="#14FFFFFF" Offset="0.5"/>
-            <GradientStop Color="#0AFFFFFF" Offset="1"/>
+        <!-- bottom edge: light pooling along the notch, bright at center -->
+        <LinearGradientBrush x:Key="BottomRimBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+            <GradientStop Color="#08FFFFFF" Offset="0"/>
+            <GradientStop Color="#2EFFFFFF" Offset="0.5"/>
+            <GradientStop Color="#08FFFFFF" Offset="1"/>
         </LinearGradientBrush>
     </Window.Resources>
 
     <Border x:Name="Island"
             CornerRadius="0,0,18,18"
             Background="#591E1D23"
-            BorderBrush="{StaticResource RimBrush}"
-            BorderThickness="1,0,1,1"
+            BorderBrush="{StaticResource BottomRimBrush}"
+            BorderThickness="0,0,0,1"
             Padding="16,0">
         <Border.Effect>
             <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
         </Border.Effect>
         <Grid>
-            <!-- glass layers: sheen on top of everything else -->
-            <Border CornerRadius="0,0,17,17"
-                    Background="{StaticResource SheenBrush}"
-                    IsHitTestVisible="False"/>
 
             <!-- Collapsed pill -->
             <Grid x:Name="PillView">
