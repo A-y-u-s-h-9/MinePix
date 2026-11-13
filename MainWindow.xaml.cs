@@ -182,7 +182,7 @@ public partial class MainWindow : Window
         if (!MusicService.Instance.HasSession) return;
 
         var duration = MusicService.Instance.Duration;
-        var position = MusicService.Instance.Position;
+        var position = MusicService.Instance.DisplayPosition;
         if (duration.TotalMilliseconds <= 0) return;
 
         if (!_seeking)

@@ -29,6 +29,7 @@ public sealed class MusicService
     public string SourceApp { get; private set; } = "";
     public TimeSpan Duration { get; private set; } = TimeSpan.Zero;
     public TimeSpan Position { get; private set; } = TimeSpan.Zero;
+    private DateTime _positionStampUtc = DateTime.UtcNow;
     public bool IsPlaying { get; private set; }
     public System.Windows.Media.ImageSource? Artwork { get; private set; }
 
@@ -179,6 +180,7 @@ public sealed class MusicService
         Duration = duration;
         Position = position;
         IsPlaying = isPlaying;
+        _positionStampUtc = DateTime.UtcNow;
         if (art is not null) Artwork = art; // keep last artwork briefly when an event loses it
 
         _dispatcher?.Invoke(() => Changed?.Invoke());
@@ -187,6 +189,21 @@ public sealed class MusicService
     public Task TogglePlayPauseAsync() => _session is null ? Task.CompletedTask : _session.TryTogglePlayPauseAsync().AsTask();
     public Task SkipNextAsync() => _session is null ? Task.CompletedTask : _session.TrySkipNextAsync().AsTask();
     public Task SkipPreviousAsync() => _session is null ? Task.CompletedTask : _session.TrySkipPreviousAsync().AsTask();
+
+    /// <summary>
+    /// Position with interpolation between SMTC updates: apps don't all fire
+    /// TimelinePropertiesChanged frequently, so we extrapolate while playing.
+    /// </summary>
+    public TimeSpan DisplayPosition
+    {
+        get
+        {
+            if (!HasSession) return TimeSpan.Zero;
+            if (!IsPlaying) return Position;
+            var extrapolated = Position + (DateTime.UtcNow - _positionStampUtc);
+            return Duration > TimeSpan.Zero && extrapolated > Duration ? Duration : extrapolated;
+        }
+    }
 
     public async Task SeekAsync(double fraction)
     {
