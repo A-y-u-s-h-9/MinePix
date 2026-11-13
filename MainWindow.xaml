@@ -72,6 +72,29 @@
             <Setter Property="MaxWidth" Value="72"/>
         </Style>
 
+        <!-- iOS-style pill switch -->
+        <Style x:Key="IslandSwitch" TargetType="ToggleButton">
+            <Setter Property="Background" Value="#1FFFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="13" Width="46" Height="26" Padding="3">
+                            <Ellipse x:Name="Knob" Width="20" Height="20" Fill="#F5F5F7" HorizontalAlignment="Left"
+                                     VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="#8AB4FF"/>
+                                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="ScrollBar">
             <Setter Property="Width" Value="7"/>
             <Setter Property="MinWidth" Value="7"/>
@@ -278,7 +301,8 @@
             Background="#591E1D23"
             BorderBrush="{StaticResource BottomRimBrush}"
             BorderThickness="0,0,0,1"
-            Padding="16,0">
+            Padding="16,0"
+            ClipToBounds="True">
         <Border.Effect>
             <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
         </Border.Effect>
@@ -514,6 +538,116 @@
                     </Grid>
                 </Border>
 
+        <!-- selector sheet (Wi-Fi / Bluetooth) -->
+        <Grid Grid.Row="2" x:Name="SelectorPanel" Visibility="Collapsed"
+              Background="#D525262C">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="SelectorBackButton" Style="{StaticResource IslandFlatButton}"
+                            FontSize="16" Padding="4,0" Click="SelectorBack_Click" ToolTip="Back">
+                        <TextBlock Text="&#x2039;" Foreground="#F5F5F7" FontFamily="Segoe UI Semibold"
+                                   FontSize="22" VerticalAlignment="Center"/>
+                    </Button>
+                    <TextBlock x:Name="SelectorTitle" Text="" Foreground="#F5F5F7"
+                               FontFamily="Segoe UI Semibold" FontSize="14"
+                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+                </StackPanel>
+                <Button x:Name="SelectorRefreshButton" Content="&#x21bb;" Style="{StaticResource IslandFlatButton}"
+                        FontSize="16" Padding="8,2" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Click="SelectorRefresh_Click" ToolTip="Refresh list"/>
+            </Grid>
+
+            <Border Grid.Row="1" Height="1" Background="#1FFFFFFF" Margin="0,10,0,4"/>
+
+            <!-- radio master toggle row -->
+            <Grid Grid.Row="2" Margin="0,2,0,6">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Grid>
+                        <Ellipse x:Name="SelectorGlyphCircle" Width="46" Height="46" Fill="#1FFFFFFF"/>
+                        <TextBlock x:Name="SelectorGlyph" Text="📶" FontSize="22" FontFamily="Segoe UI Emoji"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="SelectorRadioName" Text="Wi-Fi" Foreground="#F5F5F7"
+                                   FontFamily="Segoe UI Semibold" FontSize="13"/>
+                        <TextBlock x:Name="SelectorRadioState" Text="On" Foreground="#8E8E93"
+                                   FontFamily="Segoe UI" FontSize="11" Margin="0,1,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+                <ToggleButton x:Name="SelectorRadioSwitch" Style="{StaticResource IslandSwitch}"
+                              HorizontalAlignment="Right" VerticalAlignment="Center" Click="SelectorRadioSwitch_Click"/>
+            </Grid>
+
+            <!-- rows -->
+            <ListBox Grid.Row="3" x:Name="SelectorList" Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     MouseLeftButtonUp="SelectorList_MouseUp">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0,0,0,2"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="12">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#14FFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="Transparent" Padding="10,8" MouseLeftButtonUp="SelectorRow_MouseDown">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="34"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="#8AB4FF"
+                                           FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" Foreground="#F5F5F7" FontSize="12"
+                                               FontFamily="Segoe UI Semibold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Subtitle}" Foreground="#8E8E93" FontSize="10"
+                                               FontFamily="Segoe UI" Margin="0,1,0,0"/>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="{Binding Right}" Foreground="{Binding RightBrush}"
+                                           FontFamily="Segoe UI Semibold" FontSize="11"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="SelectorEmpty" Grid.Row="3" Text="" Foreground="#6E6E73" FontSize="12"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+
+            <Grid Grid.Row="4">
+                <TextBlock x:Name="SelectorStatus" Text="" Foreground="#8AB4FF" FontSize="11"
+                           VerticalAlignment="Center" Visibility="Collapsed"/>
+                <Button x:Name="SelectorSettingsLink" Content="Manage in Settings →" Style="{StaticResource IslandFlatButton}"
+                        HorizontalAlignment="Right" Click="SelectorOpenSettings_Click"/>
+            </Grid>
+        </Grid>
+
                 <!-- Controls panel (iOS style): two tall sliders + circle grid -->
                 <Grid Grid.Row="2" x:Name="ControlsPanel" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>
@@ -612,7 +746,7 @@
                     <Border Background="#14FFFFFF" CornerRadius="8" Padding="10,5" Margin="0,8,0,0"><TextBlock Text="FPS · soon" Foreground="#D5D5DA" FontSize="12" FontFamily="Segoe UI"/></Border>
                 </WrapPanel>
 
-                <TextBlock Grid.Row="5"
+                <TextBlock Grid.Row="5" x:Name="HintText"
                            Text="Hover to browse · pointer away to collapse"
                            Foreground="#6E6E73"
                            FontFamily="Segoe UI"

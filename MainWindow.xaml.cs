@@ -89,6 +89,12 @@ public partial class MainWindow : Window
 
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") is string forceTab && (forceTab == "clipboard" || forceTab == "controls"))
             Dispatcher.BeginInvoke(new Action(() => { Expand(); SetTab(forceTab); }), DispatcherPriority.Loaded);
+
+        var forceSelector = Environment.GetEnvironmentVariable("MINEPIX_FORCE_SELECTOR");
+        if (forceSelector == "wifi" || forceSelector == "bluetooth")
+        {
+            Dispatcher.BeginInvoke(new Action(() => { Expand(); ShowSelector(forceSelector == "wifi" ? SelectorMode.Wifi : SelectorMode.Bluetooth); }), DispatcherPriority.Loaded);
+        }
     }
 
     private static double CenteredLeft(double width) => (SystemParameters.PrimaryScreenWidth - width) / 2;
@@ -372,6 +378,15 @@ public partial class MainWindow : Window
             BluetoothCaption.Foreground = Brush(btOn ? "#F5F5F7" : "#8E8E93");
             BluetoothSubCaption.Text = btOn ? "On" : "Off";
             BluetoothSubCaption.Foreground = Brush(btOn ? "#8AB4FF" : "#6E6E73");
+
+            // mirror selector state if the selector is open
+            if (_selector != SelectorMode.None)
+            {
+                SelectorRadioState.Text = _selector == SelectorMode.Wifi
+                    ? (wifiOn ? (RadioService.WifiName() ?? "On") : "Off")
+                    : (btOn ? "On" : "Off");
+                SetSelectorRadioSwitchState();
+            }
         }
         catch
         {
@@ -462,20 +477,22 @@ public partial class MainWindow : Window
         await RefreshControlsAsync();
     }
 
-    private async void WifiToggle_Click(object sender, RoutedEventArgs e)
-    {
-        bool want = WifiToggle.IsChecked == true;
-        await RadioService.SetAsync(_radios.Wifi, want);
-        await Task.Delay(350);
-        await RefreshControlsAsync();
-    }
+    private void WifiToggle_Click(object sender, RoutedEventArgs e)
+        => ShowSelector(SelectorMode.Wifi);
 
-    private async void BluetoothToggle_Click(object sender, RoutedEventArgs e)
+    private void BluetoothToggle_Click(object sender, RoutedEventArgs e)
+        => ShowSelector(SelectorMode.Bluetooth);
+
+    private async void SelectorRadioSwitch_Click(object sender, RoutedEventArgs e)
     {
-        bool want = BluetoothToggle.IsChecked == true;
-        await RadioService.SetAsync(_radios.Bluetooth, want);
+        bool want = ((ToggleButton)sender).IsChecked == true;
+        if (_selector == SelectorMode.Wifi)
+            await RadioService.SetAsync(_radios.Wifi, want);
+        else if (_selector == SelectorMode.Bluetooth)
+            await RadioService.SetAsync(_radios.Bluetooth, want);
         await Task.Delay(350);
         await RefreshControlsAsync();
+        await PopulateSelectorAsync();
     }
 
     // ---------- clipboard ----------
@@ -557,6 +574,218 @@ public partial class MainWindow : Window
         ClipStatus.Visibility = Visibility.Visible;
         _clipStatusTimer.Stop();
         _clipStatusTimer.Start();
+    }
+
+    // ---------- selector sheet (Wi-Fi / Bluetooth) ----------
+
+    private SelectorMode _selector = SelectorMode.None;
+    private const int SelectorWifiHeight = 380;
+
+    private void SetSelectorRadioSwitchState()
+    {
+        bool on;
+        if (_selector == SelectorMode.Wifi) on = _radios.Wifi is not null && RadioService.IsOn(_radios.Wifi);
+        else on = _radios.Bluetooth is not null && RadioService.IsOn(_radios.Bluetooth);
+
+        SelectorRadioSwitch.IsChecked = on;
+        SelectorGlyphCircle.Fill = Brush(on ? "#8AB4FF" : "#1FFFFFFF");
+        SelectorGlyph.Foreground = Brush(on ? "#0D1B2A" : "#8E8E93");
+        SelectorRadioName.Foreground = Brush("#F5F5F7");
+        SelectorRadioState.Foreground = Brush(on ? "#8AB4FF" : "#6E6E73");
+    }
+
+    private async void ShowSelector(SelectorMode mode)
+    {
+        _selector = mode;
+
+        // hide the normal card content
+        MusicCard.Visibility = Visibility.Collapsed;
+        ClipPanel.Visibility = Visibility.Collapsed;
+        ControlsPanel.Visibility = Visibility.Collapsed;
+        TabMusicButton.Visibility = Visibility.Collapsed;
+        TabClipboardButton.Visibility = Visibility.Collapsed;
+        TabControlsButton.Visibility = Visibility.Collapsed;
+        HintText.Visibility = Visibility.Collapsed;
+
+        SelectorPanel.Visibility = Visibility.Visible;
+        SourceChip.Text = mode == SelectorMode.Wifi ? "Wi-Fi" : "Bluetooth";
+        SelectorTitle.Text = mode == SelectorMode.Wifi ? "Wi-Fi" : "Bluetooth";
+        SelectorRefreshButton.Visibility = mode == SelectorMode.Wifi ? Visibility.Visible : Visibility.Collapsed;
+        SelectorSettingsLink.Content = mode == SelectorMode.Wifi ? "Network Settings →" : "Connected Devices →";
+        SelectorStatus.Visibility = Visibility.Collapsed;
+
+        // glyph per mode
+        if (mode == SelectorMode.Wifi)
+        {
+            SelectorGlyph.Text = "\U0001F4F6";
+            SelectorGlyph.FontFamily = new System.Windows.Media.FontFamily("Segoe UI Emoji");
+            SelectorGlyph.FontSize = 22;
+        }
+        else
+        {
+            SelectorGlyph.Text = "BT";
+            SelectorGlyph.FontFamily = new System.Windows.Media.FontFamily("Segoe UI Semibold");
+            SelectorGlyph.FontSize = 18;
+        }
+        SelectorRadioName.Text = mode == SelectorMode.Wifi ? "Wi-Fi" : "Bluetooth";
+
+        await RefreshControlsAsync();
+        SetSelectorRadioSwitchState();
+
+        AnimateWidthHeight(_settings.ExpandedWidth, SelectorWifiHeight);
+        await PopulateSelectorAsync();
+    }
+
+    private void HideSelector()
+    {
+        _selector = SelectorMode.None;
+        SelectorPanel.Visibility = Visibility.Collapsed;
+
+        // restore tab strip + hint
+        TabMusicButton.Visibility = Visibility.Visible;
+        TabClipboardButton.Visibility = Visibility.Visible;
+        TabControlsButton.Visibility = Visibility.Visible;
+        HintText.Visibility = Visibility.Visible;
+
+        // reapply current tab content
+        SetTab(_tab);
+    }
+
+    private async Task PopulateSelectorAsync()
+    {
+        SelectorList.ItemsSource = null;
+        var rows = new List<SelectorRowViewModel>();
+
+        if (_selector == SelectorMode.Wifi)
+        {
+            foreach (var net in WlanService.Networks())
+            {
+                rows.Add(new SelectorRowViewModel
+                {
+                    Glyph = "\U0001F4F6", // 📶
+                    Title = net.Ssid,
+                    Subtitle = net.Connected ? "Connected"
+                        : net.HasProfile ? "Saved network"
+                        : net.SecurityEnabled ? "Secured — needs password"
+                        : "Open network",
+                    Right = net.Connected ? "✓" : $"{net.SignalQuality}%",
+                    RightBrush = net.Connected
+                        ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x8A, 0xB4, 0xFF))
+                        : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x8E, 0x8E, 0x93)),
+                    Secured = net.SecurityEnabled,
+                    Connected = net.Connected,
+                    HasProfile = net.HasProfile,
+                    Payload = net.Ssid,
+                });
+            }
+            SetSelectorEmpty(rows.Count == 0 ? "No networks visible right now. Refresh, or check if Wi-Fi is on." : "");
+        }
+        else if (_selector == SelectorMode.Bluetooth)
+        {
+            foreach (var dev in await BluetoothService.PairedAsync())
+            {
+                rows.Add(new SelectorRowViewModel
+                {
+                    Glyph = "\U0001F433", // placeholder; refined below by name
+                    Title = dev.Name,
+                    Subtitle = dev.Kind == "BLE" ? "Bluetooth Low Energy" : "Classic Bluetooth",
+                    Right = "",
+                    Payload = dev.Id,
+                });
+            }
+            foreach (var row in rows)
+            {
+                var n = row.Title.ToLowerInvariant();
+                row.Glyph =
+                    n.Contains("iphone") || n.Contains("phone") || n.Contains("android") ? "\U0001F4F1" :
+                    n.Contains("buds") || n.Contains("headphone") || n.Contains("airpod") || n.Contains("sound") ? "\U0001F3A7" :
+                    n.Contains("keyboard") ? "\U0001F232" :
+                    n.Contains("mouse") || n.Contains("trackpad") ? "\U0001F5B1" :
+                    n.Contains("watch") ? "⌚" :
+                    n.Contains("speaker") ? "\U0001F50A" :
+                    "\U0001F4E5";
+            }
+            SetSelectorEmpty(rows.Count == 0 ? "No paired devices. Pair one in Windows Settings." : "");
+        }
+
+        SelectorList.ItemsSource = rows;
+    }
+
+    private void SetSelectorEmpty(string message)
+    {
+        SelectorEmpty.Text = message;
+        SelectorEmpty.Visibility = message.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void ShowSelectorStatus(string message)
+    {
+        SelectorStatus.Text = message;
+        SelectorStatus.Visibility = Visibility.Visible;
+    }
+
+    private void SelectorBack_Click(object sender, RoutedEventArgs e) => HideSelector();
+
+    private async void SelectorRefresh_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selector == SelectorMode.Wifi) WlanService.Scan();
+        await PopulateSelectorAsync();
+    }
+
+    private void SelectorOpenSettings_Click(object sender, RoutedEventArgs e)
+        => System.Diagnostics.Process.Start("explorer", _selector == SelectorMode.Wifi ? "ms-settings:network-wifi" : "ms-settings:connecteddevices");
+
+    private void SelectorList_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        // handled per-row; kept to satisfy XAML wiring
+    }
+
+    private async void SelectorRow_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is SelectorRowViewModel row)
+        {
+            if (_selector == SelectorMode.Wifi)
+            {
+                if (row.Connected)
+                {
+                    WlanService.Disconnect();
+                    ShowSelectorStatus($"Disconnected from {row.Title}");
+                }
+                else if (row.HasProfile || !row.Secured)
+                {
+                    if (!row.HasProfile && !row.Secured)
+                    {
+                        // open network, no profile — install a temporary open profile then connect
+                        if (WlanService.EnsureOpenProfileAndConnect(row.Title))
+                        {
+                            ShowSelectorStatus($"Connecting to {row.Title}…");
+                        }
+                        else
+                        {
+                            ShowSelectorStatus($"Couldn't join {row.Title}");
+                        }
+                    }
+                    else
+                    {
+                        if (WlanService.Connect(row.Title))
+                            ShowSelectorStatus($"Connecting to {row.Title}…");
+                        else
+                            ShowSelectorStatus($"Couldn't join {row.Title}");
+                    }
+                }
+                else
+                {
+                    ShowSelectorStatus($"{row.Title} needs a password — add it in Settings.");
+                    System.Diagnostics.Process.Start("explorer", "ms-settings:network-wifi");
+                }
+
+                await Task.Delay(1200);
+                await PopulateSelectorAsync();
+            }
+            else if (_selector == SelectorMode.Bluetooth)
+            {
+                System.Diagnostics.Process.Start("explorer", "ms-settings:connecteddevices");
+            }
+        }
     }
 
     // ---------- tray ----------
