@@ -299,15 +299,18 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock x:Name="HomeClock" Text="7:05" Foreground="#F5F5F7"
-                                               FontFamily="Segoe UI Semibold" FontSize="48"/>
-                                    <TextBlock x:Name="HomeDay" Text="TUE" Foreground="#8E8E93"
-                                               FontFamily="Segoe UI Semibold" FontSize="12"/>
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Orientation="Horizontal">
-                                    <TextBlock Text="Tokyo" Foreground="#C8C9CD" FontFamily="Segoe UI" FontSize="11"/>
-                                    <TextBlock x:Name="HomeTokyoClock" Text="10:35 PM" Foreground="#8E8E93" FontFamily="Segoe UI" FontSize="11" Margin="10,0,0,0"/>
+                                <TextBlock x:Name="HomeDay" Text="TUE" Foreground="#8E8E93"
+                                           FontFamily="Segoe UI Semibold" FontSize="12"
+                                           HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="HomeClock" Text="7:05" Foreground="#F5F5F7"
+                                           FontFamily="Segoe UI Semibold" FontSize="54"
+                                           VerticalAlignment="Center" Margin="0,4,0,0"/>
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <TextBlock Text="🌐" Foreground="#8AB4FF" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Tokyo" Foreground="#F5F5F7" FontFamily="Segoe UI Semibold" FontSize="12"
+                                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                    <TextBlock x:Name="HomeTokyoClock" Text="10:35 PM" Foreground="#8E8E93" FontFamily="Segoe UI" FontSize="11"
+                                               VerticalAlignment="Center" Margin="12,0,0,0"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -348,10 +351,18 @@
                         <!-- PC battery card -->
                         <Border Grid.Row="1" Grid.Column="1" Margin="6,6,0,0" Style="{StaticResource Tile}">
                             <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="This PC" Foreground="#8E8E93" FontFamily="Segoe UI Semibold" FontSize="12"/>
-                                    <TextBlock x:Name="HomeBatteryPercent" Text="100%" Foreground="#30D158" FontFamily="Segoe UI Semibold" FontSize="40"/>
-                                    <TextBlock x:Name="HomeBatteryStatus" Text="Plugged in" Foreground="#6E6E73" FontSize="12"/>
+                                    <TextBlock Text="This PC" Foreground="#8E8E93" FontFamily="Segoe UI Semibold" FontSize="13"/>
+                                    <TextBlock x:Name="HomeBatteryPercent" Text="100%" Foreground="#30D158"
+                                               FontFamily="Segoe UI Semibold" FontSize="40"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Width="18" Height="8" CornerRadius="2" BorderBrush="#30D158" BorderThickness="1.5" Margin="0,2,4,0"/>
+                                    <TextBlock Text="Plugged in" x:Name="HomeBatteryStatus" Foreground="#6E6E73" FontSize="10" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
