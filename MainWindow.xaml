@@ -405,9 +405,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <TextBlock x:Name="MusicTitle" Text="" Grid.Row="0" Foreground="#F5F5F7"
+                            <TextBlock x:Name="MusicTitle" Text="Nothing playing" Grid.Row="0" Foreground="#F5F5F7"
                                        FontFamily="Segoe UI Semibold" FontSize="22" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
-                            <TextBlock x:Name="MusicArtist" Text="" Grid.Row="1" Foreground="#C8C9CD"
+                            <TextBlock x:Name="MusicArtist" Text="Start something in any media app" Grid.Row="1" Foreground="#C8C9CD"
                                        FontFamily="Segoe UI" FontSize="13" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                             <!-- transport -->
                             <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center"
