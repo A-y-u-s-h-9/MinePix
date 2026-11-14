@@ -37,7 +37,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="24" Width="48" Height="48">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="19" Width="38" Height="38">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </StackPanel>
@@ -57,19 +57,19 @@
         <Style x:Key="IslandCaption" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#D5D5DA"/>
             <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="9"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="MaxWidth" Value="72"/>
+            <Setter Property="MaxWidth" Value="68"/>
         </Style>
 
         <Style x:Key="IslandCaptionSub" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#8E8E93"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontSize" Value="8"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="MaxWidth" Value="72"/>
+            <Setter Property="MaxWidth" Value="68"/>
         </Style>
 
         <!-- iOS-style pill switch -->

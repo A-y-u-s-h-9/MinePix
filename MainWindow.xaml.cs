@@ -273,7 +273,9 @@ public partial class MainWindow : Window
         if (_expanded) return;
         _expanded = true;
 
-        AnimateWidthHeight(_settings.ExpandedWidth, _activeExpandedHeight);
+        // snap immediately so the island never gets stuck at compact height
+        Width  = _settings.ExpandedWidth;
+        Height = _activeExpandedHeight;
 
         AnimateOpacity(PillView, 0, 120, () => PillView.Visibility = Visibility.Collapsed);
         ExpandedView.Visibility = Visibility.Visible;
@@ -285,7 +287,8 @@ public partial class MainWindow : Window
         if (!_expanded) return;
         _expanded = false;
 
-        AnimateWidthHeight(ComputeCollapsedWidth(), ComputeCollapsedHeight());
+        Width  = ComputeCollapsedWidth();
+        Height = ComputeCollapsedHeight();
 
         AnimateOpacity(ExpandedView, 0, 120, () => ExpandedView.Visibility = Visibility.Collapsed);
         PillView.Visibility = Visibility.Visible;
