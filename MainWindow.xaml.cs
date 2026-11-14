@@ -1,6 +1,8 @@
-﻿using System.Windows;
+﻿using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
@@ -17,7 +19,7 @@ public partial class MainWindow : Window
 {
     private readonly Settings _settings;
     private readonly DispatcherTimer _collapseTimer;
-    private readonly DispatcherTimer _hoverCheckTimer;
+    private readonly DispatcherTimer _hoverWatchdog;
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _mediaTimer;
     private readonly DispatcherTimer _clipStatusTimer;
@@ -54,23 +56,12 @@ public partial class MainWindow : Window
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
         _collapseTimer.Tick += (_, _) => { _collapseTimer.Stop(); Collapse(); };
 
-        // polling backstop — reliable mouse-out collapse. Skip silently on any error.
-        _hoverCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
-        _hoverCheckTimer.Tick += (_, _) =>
-        {
-            try
-            {
-                if (!_expanded) return;
-                var p = System.Windows.Input.Mouse.GetPosition(this);
-                bool inside = p.X >= 0 && p.Y >= 0 && p.X <= ActualWidth && p.Y <= ActualHeight;
-                if (inside)
-                    _collapseTimer.Stop();
-                else if (!_collapseTimer.IsEnabled)
-                    _collapseTimer.Start();
-            }
-            catch { }
-        };
-        _hoverCheckTimer.Start();
+        // Watchdog: compare the raw Win32 cursor position against the island's Win32 window
+        // rect. WPF mouse enter/leave on a AllowsTransparency+Topmost window is unreliable —
+        // it misses or spuriously raises events when rendering commits change under the cursor.
+        _hoverWatchdog = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+        _hoverWatchdog.Tick += (_, _) => EvaluateHover();
+        _hoverWatchdog.Start();
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) =>
@@ -277,19 +268,69 @@ public partial class MainWindow : Window
         sb.Begin(this);
     }
 
-    private static void LogHover(string label)
+    private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {
+        EvaluateHover();
+    }
+
+    private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        EvaluateHover();
+    }
+
+    // ---------- hover state machine (Win32 geometry — see _hoverWatchdog) ----------
+
+    private void EvaluateHover()
+    {
+        if (_seeking) // don't disturb the island while the user is dragging the seek bar
+        {
+            _collapseTimer.Stop();
+            return;
+        }
+
+        bool inside = CursorOverIsland();
+        if (inside)
+        {
+            _collapseTimer.Stop();
+            if (!_expanded)
+                Expand();
+        }
+        else if (_expanded && !_collapseTimer.IsEnabled)
+        {
+            _collapseTimer.Start();
+        }
+    }
+
+    private bool CursorOverIsland()
+    {
+        if (_islandHidden)
+            return false;
         try
         {
-            var dir = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MinePix");
-            System.IO.Directory.CreateDirectory(dir);
-            System.IO.File.AppendAllText(
-                System.IO.Path.Combine(dir, "hover.log"),
-                $"{DateTime.Now:o} {label}{Environment.NewLine}");
+            if (!GetCursorPos(out var pt))
+                return false;
+            IntPtr hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero || !GetWindowRect(hwnd, out var rect))
+                return false;
+            return pt.X >= rect.Left && pt.X < rect.Right && pt.Y >= rect.Top && pt.Y < rect.Bottom;
         }
-        catch { }
+        catch
+        {
+            return false;
+        }
     }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT pt);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT { public int X; public int Y; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
 
     private void UpdateBatteryChip()
     {
@@ -314,16 +355,6 @@ public partial class MainWindow : Window
     }
 
     // ---------- island expand / collapse ----------
-
-    private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-    {
-        try { Expand(); } catch { }
-    }
-
-    private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-    {
-        // polling timer handles collapse — kept as a no-op for the XAML hook
-    }
 
     private void Expand()
     {
