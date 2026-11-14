@@ -371,7 +371,11 @@
             CornerRadius="{DynamicResource PillRadius}"
             Background="#591E1D23"
             Padding="16,0"
-            ClipToBounds="True">
+            ClipToBounds="True"
+            RenderTransformOrigin="0.5,0">
+        <Border.RenderTransform>
+            <ScaleTransform x:Name="IslandMorphScale" ScaleX="1" ScaleY="1"/>
+        </Border.RenderTransform>
         <Border.Effect>
             <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
         </Border.Effect>
