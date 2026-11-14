@@ -29,6 +29,9 @@ public partial class SettingsWindow : Window
         ExpandedHeightSlider.Value = _settings.ExpandedHeight;
         ExpandedHeightLabel.Text = $"{(int)_settings.ExpandedHeight} px";
 
+        IslandTopOffsetSlider.Value = _settings.IslandTopOffset;
+        IslandTopOffsetLabel.Text = $"{(int)_settings.IslandTopOffset} px";
+
         CollapseDelaySlider.Value = _settings.CollapseDelayMs;
         CollapseDelayLabel.Text = $"{_settings.CollapseDelayMs} ms";
 
@@ -115,6 +118,36 @@ public partial class SettingsWindow : Window
         _settings.ExpandedHeight = e.NewValue;
         ExpandedHeightLabel.Text = $"{(int)e.NewValue} px";
         Persist();
+    }
+
+    private void IslandTopOffsetSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_loading) return;
+        _settings.IslandTopOffset = e.NewValue;
+        IslandTopOffsetLabel.Text = $"{(int)e.NewValue} px";
+        Persist();
+    }
+
+    private void ApplyButton_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.Save();
+        try
+        {
+            var exe = Environment.ProcessPath ?? System.Reflection.Assembly.GetEntryAssembly()?.Location;
+            if (!string.IsNullOrEmpty(exe))
+            {
+                // defer the relaunch ~1s so this instance releases the single-instance mutex first
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c ping 127.0.0.1 -n 2 >nul && start \"\" \"{exe}\"",
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                });
+            }
+        }
+        catch { }
+        Application.Current.Shutdown();
     }
 
     private void CollapseDelaySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

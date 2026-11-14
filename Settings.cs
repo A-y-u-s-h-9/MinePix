@@ -19,6 +19,7 @@ public sealed class Settings
     public double CollapsedHeight { get; set; } = 34;
     public double ExpandedWidth { get; set; } = 480;
     public double ExpandedHeight { get; set; } = 270;
+    public double IslandTopOffset { get; set; } = 10;
     public int CollapseDelayMs { get; set; } = 250;
 
     public static string SettingsDir =>

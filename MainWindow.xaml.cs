@@ -47,7 +47,7 @@ public partial class MainWindow : Window
 
         Width = ComputeCollapsedWidth();
         Height = ComputeCollapsedHeight();
-        Top = 0;
+        Top = _settings.IslandTopOffset;
         Left = CenteredLeft(Width);
 
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
@@ -155,6 +155,7 @@ public partial class MainWindow : Window
         ApplyTheme();
         ApplyIslandShape();
         _collapseTimer.Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs);
+        Top = _settings.IslandTopOffset;
 
         if (!_expanded)
         {
