@@ -29,15 +29,15 @@
             <Setter Property="Background" Value="#1FFFFFFF"/>
             <Setter Property="Foreground" Value="#8E8E93"/>
             <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Margin" Value="2"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="28" Width="56" Height="56">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="24" Width="48" Height="48">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </StackPanel>
@@ -462,8 +462,8 @@
                 <!-- Music card -->
                 <Border Grid.Row="2" x:Name="MusicCard" Background="#3814171C" CornerRadius="14"
                         BorderBrush="#14FFFFFF" BorderThickness="1"
-                        Padding="10" VerticalAlignment="Top" Visibility="Collapsed">
-                    <Grid Height="155">
+                        Padding="10" VerticalAlignment="Center" Visibility="Collapsed">
+                    <Grid Height="130">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="58"/>
                             <ColumnDefinition Width="*"/>
@@ -881,6 +881,7 @@
         </Grid>
     </Border>
 </Window>
+
 
 
 
