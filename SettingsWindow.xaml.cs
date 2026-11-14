@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace MinePix;
@@ -12,6 +13,13 @@ public partial class SettingsWindow : Window
     {
         _settings = settings;
         InitializeComponent();
+
+        // wheel scrolls the menu at ~half the default step instead of jumping rows
+        SettingsScroll.PreviewMouseWheel += SettingsScroll_PreviewMouseWheel;
+
+        // over the sliders the wheel should scroll the page, not fight the slider
+        foreach (var s in new Slider[] { CollapsedWidthSlider, ExpandedHeightSlider, IslandTopOffsetSlider, CollapseDelaySlider })
+            s.PreviewMouseWheel += SettingsScroll_PreviewMouseWheel;
 
         SyncUiFromSettings();
         _loading = false;
@@ -49,6 +57,14 @@ public partial class SettingsWindow : Window
         {
             try { main.RefreshFromSettings(); } catch { }
         }
+    }
+
+    /// <summary>Wheel scrolls the settings page at half WPF's default step.</summary>
+    private void SettingsScroll_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        if (SettingsScroll is ScrollViewer sv)
+            sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta * 0.2);
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)

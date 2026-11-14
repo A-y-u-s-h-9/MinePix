@@ -445,9 +445,14 @@
                         <Button x:Name="IconClipboard" Content="&#x1F4CB;" Style="{StaticResource IslandIconButton}" Click="IconClipboard_Click" Tag="clipboard" ToolTip="Clipboard"/>
                         <Button x:Name="IconControls"  Content="&#x1F39A;" Style="{StaticResource IslandIconButton}" Click="IconControls_Click"  Tag="controls"  ToolTip="Controls"/>
                     </StackPanel>
-                    <Button x:Name="IconSettings" Content="&#x2699;" Style="{StaticResource IslandIconButton}"
-                            Click="IconSettings_Click" Tag="settings" ToolTip="Settings"
-                            HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock x:Name="BatteryHeaderChip" Text="" Foreground="#30D158"
+                                   FontFamily="Segoe UI Semibold" FontSize="11"
+                                   Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <Button x:Name="IconSettings" Content="&#x2699;" Style="{StaticResource IslandIconButton}"
+                                Click="IconSettings_Click" Tag="settings" ToolTip="Settings"
+                                VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Grid>
 
                 <!-- Music card -->

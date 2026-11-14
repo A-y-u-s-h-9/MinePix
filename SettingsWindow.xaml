@@ -253,7 +253,8 @@
             </Border>
 
             <!-- scrollable content -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="16,4,16,16">
+            <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Padding="16,4,16,16" PreviewMouseWheel="SettingsScroll_PreviewMouseWheel">
                 <StackPanel>
                     <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeader}" Margin="0,12,0,8"/>
 

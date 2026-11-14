@@ -54,9 +54,18 @@ public partial class MainWindow : Window
         _collapseTimer.Tick += (_, _) => { _collapseTimer.Stop(); Collapse(); };
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _clockTimer.Tick += (_, _) => PillClock.Text = DateTime.Now.ToString("HH:mm");
+        _clockTimer.Tick += (_, _) =>
+        {
+            PillClock.Text = DateTime.Now.ToString("HH:mm");
+            UpdateHeaderBattery();
+        };
         PillClock.Text = DateTime.Now.ToString("HH:mm");
+        UpdateHeaderBattery();
         _clockTimer.Start();
+
+        // dampened mouse-wheel scroll for the two island lists (less twitchy per notch)
+        ClipList.PreviewMouseWheel += ScrollDamper_PreviewMouseWheel;
+        SelectorList.PreviewMouseWheel += ScrollDamper_PreviewMouseWheel;
 
         // keep the window centered while its width animates
         SizeChanged += (_, _) => Left = CenteredLeft(ActualWidth);
@@ -251,6 +260,59 @@ public partial class MainWindow : Window
         Storyboard.SetTargetProperty(anim, new PropertyPath(TranslateTransform.XProperty));
         sb.Children.Add(anim);
         sb.Begin(this);
+    }
+
+    /// <summary>
+    /// Battery charge + idle/charging status shown in the header, beside the nav icons.
+    /// Hidden entirely on machines with no battery.
+    /// </summary>
+    private void UpdateHeaderBattery()
+    {
+        try
+        {
+            var snap = PowerService.GetSnapshot();
+            if (snap is null)
+            {
+                BatteryHeaderChip.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            bool charging = snap.PluggedIn && snap.Percent < 100;
+            BatteryHeaderChip.Text = $"\U0001F50B {snap.Percent}% · {(charging ? "Charging" : "Idle")}";
+            BatteryHeaderChip.Visibility = Visibility.Visible;
+            BatteryHeaderChip.Foreground = Brush(
+                snap.Percent <= 20 && !charging ? "#FF453A" : charging ? "#30D158" : "#B8B8BD");
+        }
+        catch
+        {
+            BatteryHeaderChip.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    /// <summary>Wheel over an island list scrolls it at ~half WPF's default step instead of a full page-jump.</summary>
+    private void ScrollDamper_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        ScrollViewer? sv = FindVisualChild<ScrollViewer>(sender as DependencyObject);
+        if (sv is not null)
+            sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta * 0.2);
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject? parent) where T : DependencyObject
+    {
+        if (parent is null)
+            return null;
+        int count = VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T match)
+                return match;
+            var deeper = FindVisualChild<T>(child);
+            if (deeper is not null)
+                return deeper;
+        }
+        return null;
     }
 
     // ---------- island expand / collapse ----------
