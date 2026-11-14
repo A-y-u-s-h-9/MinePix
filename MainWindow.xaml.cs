@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Runtime.InteropServices;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
@@ -17,6 +18,7 @@ public partial class MainWindow : Window
 {
     private readonly Settings _settings;
     private readonly DispatcherTimer _collapseTimer;
+    private readonly DispatcherTimer _hoverWatchdog;
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _mediaTimer;
     private readonly DispatcherTimer _clipStatusTimer;
@@ -52,6 +54,13 @@ public partial class MainWindow : Window
 
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
         _collapseTimer.Tick += (_, _) => { _collapseTimer.Stop(); Collapse(); };
+
+        // Watchdog: compare the raw Win32 cursor position against the island's Win32 window rect.
+        // WPF enter/leave on a AllowsTransparency+Topmost window can't be trusted — it misses or
+        // spuriously raises events when rendering commits change under a stationary cursor.
+        _hoverWatchdog = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+        _hoverWatchdog.Tick += (_, _) => EvaluateHover();
+        _hoverWatchdog.Start();
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) =>
@@ -319,27 +328,94 @@ public partial class MainWindow : Window
 
     private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        _collapseTimer.Stop();
-        Expand();
+        EvaluateHover();
     }
 
     private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        if (_seeking) return; // don't collapse while dragging the seek bar
-        _collapseTimer.Stop();
-        _collapseTimer.Start();
+        EvaluateHover();
     }
+
+    // ---------- hover state machine (Win32 geometry — see _hoverWatchdog) ----------
+
+    private void EvaluateHover()
+    {
+        if (_seeking) // don't disturb the island while the user is dragging the seek bar
+        {
+            _collapseTimer.Stop();
+            return;
+        }
+
+        bool inside = CursorOverIsland();
+        if (inside)
+        {
+            _collapseTimer.Stop();
+            if (!_expanded)
+                Expand();
+        }
+        else if (_expanded && !_collapseTimer.IsEnabled)
+        {
+            _collapseTimer.Start();
+        }
+    }
+
+    private bool CursorOverIsland()
+    {
+        if (_islandHidden)
+            return false;
+        try
+        {
+            if (!GetCursorPos(out var pt))
+                return false;
+            IntPtr hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero || !GetWindowRect(hwnd, out var rect))
+                return false;
+            return pt.X >= rect.Left && pt.X < rect.Right && pt.Y >= rect.Top && pt.Y < rect.Bottom;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT pt);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT { public int X; public int Y; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
 
     private void Expand()
     {
         if (_expanded) return;
         _expanded = true;
 
-        AnimateWidthHeight(_settings.ExpandedWidth, _activeExpandedHeight);
+        double fromW = Width, fromH = Height, fromLeft = Left;
+        double toW = _settings.ExpandedWidth, toH = _activeExpandedHeight;
+        double newLeft = CenteredLeft(toW);
 
-        AnimateOpacity(PillView, 0, 120, () => PillView.Visibility = Visibility.Collapsed);
+        // size the window to its final bounds up-front; the visual morph is a Win32 region —
+        // no per-frame WPF layout/resize, so no stutter and no stuck-at-compact failures
+        Left = newLeft;
+        Width = toW;
+        Height = toH;
+
+        PillView.Visibility = Visibility.Visible;
+        PillView.Opacity = 1;
         ExpandedView.Visibility = Visibility.Visible;
+        ExpandedView.Opacity = 0;
+
+        var from = _morphActive ? _morphCurrentRect : new Rect(fromLeft - newLeft, 0, fromW, fromH);
+        double fromR = _morphActive ? _morphCurrentRadius : 18;
+        StartMorph(from, new Rect(0, 0, toW, toH), fromR, 18, () => ClearMorphClip());
+
         AnimateOpacity(ExpandedView, 1, 200);
+        AnimateOpacity(PillView, 0, 120, () => PillView.Visibility = Visibility.Collapsed);
     }
 
     private void Collapse()
@@ -347,20 +423,139 @@ public partial class MainWindow : Window
         if (!_expanded) return;
         _expanded = false;
 
-        AnimateWidthHeight(ComputeCollapsedWidth(), ComputeCollapsedHeight());
+        double fromW = Width, fromH = Height;
+        double toW = ComputeCollapsedWidth(), toH = ComputeCollapsedHeight();
 
-        AnimateOpacity(ExpandedView, 0, 120, () => ExpandedView.Visibility = Visibility.Collapsed);
-        PillView.Visibility = Visibility.Visible;
-        AnimateOpacity(PillView, 1, 200);
+        PillView.Visibility = Visibility.Visible;   // shown during the shrink, faded in at the end
+        PillView.Opacity = 0;
+        ExpandedView.Visibility = Visibility.Visible; // stays up while the region shrinks
+
+        var from = _morphActive ? _morphCurrentRect : new Rect(0, 0, fromW, fromH);
+        double fromR = _morphActive ? _morphCurrentRadius : 18;
+        StartMorph(from, new Rect((fromW - toW) / 2, 0, toW, toH), fromR, 18,
+            onCompleted: () =>
+            {
+                ClearMorphClip();                    // drop the clip — full window composites normally
+                Width = toW;                          // now physically return to the pill footprint
+                Height = toH;
+                Left = CenteredLeft(toW);
+                PillView.Visibility = Visibility.Visible;
+            });
+
+        AnimateOpacity(ExpandedView, 0, 150, () => ExpandedView.Visibility = Visibility.Collapsed);
+        AnimateOpacity(PillView, 1, 170);
     }
 
-    private void AnimateWidthHeight(double width, double height)
+    // ---------- hover morph (rounded-rect window region, DPI-aware) ----------
+
+    private DispatcherTimer? _morphTimer;
+    private Rect _morphFrom, _morphTo, _morphCurrentRect;
+    private double _morphFromRadius, _morphToRadius, _morphCurrentRadius;
+    private DateTime _morphStartUtc;
+    private bool _morphActive;
+    private Action? _morphCompleted;
+    private const double MorphDurationMs = 240;
+
+    private bool UniformCorners()
+        => Resources["PillRadius"] is CornerRadius cr &&
+           cr.TopLeft == cr.TopRight && cr.TopRight == cr.BottomRight && cr.BottomRight == cr.BottomLeft;
+
+    private static Rect LerpRect(Rect a, Rect b, double t)
+        => new(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t,
+               a.Width + (b.Width - a.Width) * t, a.Height + (b.Height - a.Height) * t);
+
+    private static double Lerp(double a, double b, double t) => a + (b - a) * t;
+
+    private static double EaseOutCubic(double t) => 1 - Math.Pow(1 - t, 3);
+
+    private double GetDpiScale()
     {
-        var duration = new Duration(TimeSpan.FromMilliseconds(240));
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        BeginAnimation(WidthProperty, new DoubleAnimation(width, duration) { EasingFunction = ease });
-        BeginAnimation(HeightProperty, new DoubleAnimation(height, duration) { EasingFunction = ease });
+        var src = PresentationSource.FromVisual(this);
+        return src?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
     }
+
+    private void StartMorph(Rect from, Rect to, double fromRadius, double toRadius, Action? onCompleted)
+    {
+        _morphTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(8) };
+        _morphTimer.Stop();
+
+        if (!UniformCorners())
+        {
+            // classic flat-top notch mode: no region morph — snap straight to the target footprint
+            ApplyMorphRect(to, toRadius);
+            _morphActive = false;
+            onCompleted?.Invoke();
+            ClearMorphClip();
+            return;
+        }
+
+        _morphFrom = from;
+        _morphTo = to;
+        _morphFromRadius = fromRadius;
+        _morphToRadius = toRadius;
+        _morphStartUtc = DateTime.UtcNow;
+        _morphActive = true;
+        _morphCompleted = onCompleted;
+
+        _morphTimer.Tick -= MorphTimer_Tick;
+        _morphTimer.Tick += MorphTimer_Tick;
+
+        // apply the starting clip synchronously so the (already final-size) window never flashes full-size
+        ApplyMorphRect(_morphFrom, _morphFromRadius);
+        _morphTimer.Start();
+    }
+
+    private void MorphTimer_Tick(object? sender, EventArgs e)
+    {
+        double t = (DateTime.UtcNow - _morphStartUtc).TotalMilliseconds / MorphDurationMs;
+        if (t >= 1.0)
+        {
+            _morphTimer?.Stop();
+            ApplyMorphRect(_morphTo, _morphToRadius);
+            _morphActive = false;
+            var done = _morphCompleted;
+            _morphCompleted = null;
+            done?.Invoke();
+            return;
+        }
+
+        double eased = EaseOutCubic(Math.Clamp(t, 0.0, 1.0));
+        ApplyMorphRect(LerpRect(_morphFrom, _morphTo, eased), Lerp(_morphFromRadius, _morphToRadius, eased));
+    }
+
+    private void ApplyMorphRect(Rect rect, double radiusDip)
+    {
+        _morphCurrentRect = rect;
+        _morphCurrentRadius = radiusDip;
+
+        IntPtr hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero)
+            return;
+
+        double dpi = GetDpiScale();
+        int l = (int)Math.Round(rect.X * dpi);
+        int tTop = (int)Math.Round(rect.Y * dpi);
+        int r = (int)Math.Round((rect.X + rect.Width) * dpi);
+        int b = (int)Math.Round(rect.Height * dpi);
+        int d = (int)Math.Round(radiusDip * 2 * dpi);
+        if (d < 1) d = 1;
+
+        IntPtr region = CreateRoundRectRgn(l, tTop, r, b, d, d);
+        SetWindowRgn(hwnd, region, true);
+    }
+
+    private void ClearMorphClip()
+    {
+        IntPtr hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (hwnd != IntPtr.Zero)
+            SetWindowRgn(hwnd, IntPtr.Zero, true);
+    }
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateRoundRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect, int nWidthEllipse, int nHeightEllipse);
+
+    [DllImport("user32.dll")]
+    private static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
 
     private void AnimateOpacity(UIElement element, double to, int durationMs, Action? onCompleted = null)
     {
@@ -525,7 +720,32 @@ public partial class MainWindow : Window
                 RefreshMusicUi();
                 break;
         }
-        AnimateWidthHeight(_settings.ExpandedWidth, _activeExpandedHeight);
+        if (_expanded)
+            MorphIslandHeight(_activeExpandedHeight);
+    }
+
+    /// <summary>
+    /// Morphs the expanded island's height in place (used when switching tabs / opening the
+    /// selector sheet while the island is already open). The window is set to the final size
+    /// up front; a Win32 region clips the reveal, so there is no layout thrash per frame.
+    /// </summary>
+    private void MorphIslandHeight(double targetHeight)
+    {
+        double current = _morphActive ? _morphCurrentRect.Height : ActualHeight;
+        double width = Width;
+
+        if (Math.Abs(targetHeight - current) < 0.5)
+            return;
+
+        if (!UniformCorners())
+        {
+            Height = targetHeight; // classic notch: snap
+            return;
+        }
+
+        Height = targetHeight; // frame goes final up front; region reveals smoothly
+        StartMorph(new Rect(0, 0, width, current), new Rect(0, 0, width, targetHeight), 18, 18,
+                   () => ClearMorphClip());
     }
 
     private void IconMusic_Click(object sender, RoutedEventArgs e)     => SetTab("music");
@@ -880,7 +1100,7 @@ public partial class MainWindow : Window
         await RefreshControlsAsync();
         SetSelectorRadioSwitchState();
 
-        AnimateWidthHeight(_settings.ExpandedWidth, SelectorWifiHeight);
+        MorphIslandHeight(SelectorWifiHeight);
         await PopulateSelectorAsync();
     }
 

@@ -395,7 +395,7 @@
             </Ellipse>
 
             <!-- Collapsed pill -->
-            <Grid x:Name="PillView">
+            <Grid x:Name="PillView" VerticalAlignment="Top">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
                     <Ellipse x:Name="PillDot" Width="8" Height="8" Fill="#8AB4FF" VerticalAlignment="Center"/>
                     <TextBlock x:Name="PillNote" Text="&#x266A;" Foreground="#8AB4FF" FontSize="13"
