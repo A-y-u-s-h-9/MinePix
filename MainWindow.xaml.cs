@@ -54,25 +54,33 @@ public partial class MainWindow : Window
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
         _collapseTimer.Tick += (_, _) => { _collapseTimer.Stop(); Collapse(); };
 
-        // polling backstop — the Island's hit-test region can flake (transparent borders, edge cases),
-        // so confirm the cursor is actually inside before we collapse.
+        // polling backstop — reliable mouse-out collapse. Skip silently on any error.
         _hoverCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
         _hoverCheckTimer.Tick += (_, _) =>
         {
-            if (!_expanded) return;
-            var p = System.Windows.Input.Mouse.GetPosition(this);
-            bool inside = p.X >= 0 && p.Y >= 0 && p.X <= ActualWidth && p.Y <= ActualHeight;
-            if (inside)
-                _collapseTimer.Stop();
-            else if (!_collapseTimer.IsEnabled)
-                _collapseTimer.Start();
+            try
+            {
+                if (!_expanded) return;
+                var p = System.Windows.Input.Mouse.GetPosition(this);
+                bool inside = p.X >= 0 && p.Y >= 0 && p.X <= ActualWidth && p.Y <= ActualHeight;
+                if (inside)
+                    _collapseTimer.Stop();
+                else if (!_collapseTimer.IsEnabled)
+                    _collapseTimer.Start();
+            }
+            catch { }
         };
         _hoverCheckTimer.Start();
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _clockTimer.Tick += (_, _) => PillClock.Text = DateTime.Now.ToString("HH:mm");
+        _clockTimer.Tick += (_, _) =>
+        {
+            PillClock.Text = DateTime.Now.ToString("HH:mm");
+            UpdateBatteryChip();
+        };
         PillClock.Text = DateTime.Now.ToString("HH:mm");
         _clockTimer.Start();
+        UpdateBatteryChip();
 
         // keep the window centered while its width animates
         SizeChanged += (_, _) => Left = CenteredLeft(ActualWidth);
@@ -269,19 +277,52 @@ public partial class MainWindow : Window
         sb.Begin(this);
     }
 
+    private static void LogHover(string label)
+    {
+        try
+        {
+            var dir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MinePix");
+            System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.AppendAllText(
+                System.IO.Path.Combine(dir, "hover.log"),
+                $"{DateTime.Now:o} {label}{Environment.NewLine}");
+        }
+        catch { }
+    }
+
+    private void UpdateBatteryChip()
+    {
+        try
+        {
+            var snap = PowerService.GetSnapshot();
+            if (snap is null)
+            {
+                BatteryChip.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            BatteryChip.Visibility = Visibility.Visible;
+            BatteryChip.Text = $"\U0001F50B {snap.Percent}%";
+            BatteryChip.Foreground = Brush(
+                snap.Percent <= 20 ? "#FF453A" : snap.Percent >= 100 ? "#30D158" : "#8AB4FF");
+        }
+        catch
+        {
+            BatteryChip.Visibility = Visibility.Collapsed;
+        }
+    }
+
     // ---------- island expand / collapse ----------
 
     private void Window_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        _collapseTimer.Stop();
-        Expand();
+        try { Expand(); } catch { }
     }
 
     private void Window_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
     {
-        if (_seeking) return; // don't collapse while dragging the seek bar
-        _collapseTimer.Stop();
-        _collapseTimer.Start();
+        // polling timer handles collapse — kept as a no-op for the XAML hook
     }
 
     private void Expand()
@@ -558,39 +599,25 @@ public partial class MainWindow : Window
             BluetoothSubCaption.Text = btOn ? "On" : "Off";
             BluetoothSubCaption.Foreground = Brush(btOn ? "#8AB4FF" : "#6E6E73");
 
-            // mute tile state
-            bool muted2 = CoreAudio.GetMuted();
-            MuteCaption.Text = "Sound";
-            MuteCaption.Foreground = Brush(muted2 ? "#8E8E93" : "#F5F5F7");
-            MuteSubCaption.Text = muted2 ? "Muted" : "On";
-            MuteSubCaption.Foreground = Brush(muted2 ? "#8E8E93" : "#8AB4FF");
-            MuteToggleTile.IsChecked = !muted2;
-
-            // battery + power plan
+            // battery chip (now in the header row) + power plan styles
             var snap = PowerService.GetSnapshot();
+            if (snap is not null)
+            {
+                BatteryChip.Text = $"\U0001F50B {snap.Percent}%";
+                BatteryChip.Visibility = Visibility.Visible;
+                BatteryChip.Foreground = Brush(
+                    snap.Percent <= 20 ? "#FF453A" : snap.Percent >= 100 ? "#30D158" : "#8AB4FF");
+            }
+            else
+            {
+                BatteryChip.Visibility = Visibility.Collapsed;
+            }
+
             var activeStyle = (Style)FindResource("IslandPowerModeButtonActive");
             var inactiveStyle = (Style)FindResource("IslandPowerModeButton");
             PowerBatteryButton.Style = snap is not null && snap.ActiveScheme == "Battery saver" ? activeStyle : inactiveStyle;
             PowerBalancedButton.Style = snap is not null && snap.ActiveScheme == "Balanced" ? activeStyle : inactiveStyle;
             PowerPerformanceButton.Style = snap is not null && snap.ActiveScheme == "Performance" ? activeStyle : inactiveStyle;
-
-            if (snap is not null)
-            {
-                BatteryGlyph.Text = snap.PluggedIn ? "\U0001F50B" : "\U0001FAAB";
-                BatteryPercent.Text = $"{snap.Percent}%";
-                BatteryStatus.Text = snap.PluggedIn
-                    ? (snap.Percent >= 100 ? "Full " : "Charging")
-                    : snap.Percent <= 20 ? "Low" : "On battery";
-                BatteryPercent.Foreground = Brush(
-                    snap.Percent <= 20 ? "#FF453A" : "#30D158");
-            }
-            else
-            {
-                BatteryGlyph.Text = "—";
-                BatteryPercent.Text = "n/a";
-                BatteryStatus.Text = "No battery";
-                BatteryPercent.Foreground = Brush("#6E6E73");
-            }
 
             // mirror selector state if the selector is open
             if (_selector != SelectorMode.None)
@@ -620,7 +647,6 @@ public partial class MainWindow : Window
     {
         VolumeFill.Height = vol * trackHeight;
         VolumePercent.Text = muted ? "Muted" : $"{(int)Math.Round(vol * 100)}%";
-        MuteButton.Content = muted ? "\U0001F507" : (vol < 0.5f ? "\U0001F509" : "\U0001F50A");
     }
 
     private void UpdateBrightness(double fraction, double trackHeight)
@@ -691,12 +717,6 @@ public partial class MainWindow : Window
         _brightnessDragging = false;
         BrightnessTrack.ReleaseMouseCapture();
         ApplyBrightnessFromEvent(e);
-    }
-
-    private async void MuteButton_Click(object sender, RoutedEventArgs e)
-    {
-        CoreAudio.SetMuted(!CoreAudio.GetMuted());
-        await RefreshControlsAsync();
     }
 
     private void WifiToggle_Click(object sender, RoutedEventArgs e)
@@ -796,12 +816,6 @@ public partial class MainWindow : Window
         ClipStatus.Visibility = Visibility.Visible;
         _clipStatusTimer.Stop();
         _clipStatusTimer.Start();
-    }
-
-    private async void MuteTile_Click(object sender, RoutedEventArgs e)
-    {
-        CoreAudio.SetMuted(!CoreAudio.GetMuted());
-        await RefreshControlsAsync();
     }
 
     private async void PowerBattery_Click(object sender, RoutedEventArgs e)

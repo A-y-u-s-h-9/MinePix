@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 
 namespace MinePix;
@@ -60,3 +60,4 @@ public sealed class Settings
         }
     }
 }
+
