@@ -538,6 +538,14 @@ public partial class MainWindow : Window
             BluetoothSubCaption.Text = btOn ? "On" : "Off";
             BluetoothSubCaption.Foreground = Brush(btOn ? "#8AB4FF" : "#6E6E73");
 
+            // power plan segmented control — highlight the active scheme
+            var snap = PowerService.GetSnapshot();
+            var activeStyle = (Style)FindResource("IslandPowerModeButtonActive");
+            var inactiveStyle = (Style)FindResource("IslandPowerModeButton");
+            PowerBatteryButton.Style = snap is not null && snap.ActiveScheme == "Battery saver" ? activeStyle : inactiveStyle;
+            PowerBalancedButton.Style = snap is not null && snap.ActiveScheme == "Balanced" ? activeStyle : inactiveStyle;
+            PowerPerformanceButton.Style = snap is not null && snap.ActiveScheme == "Performance" ? activeStyle : inactiveStyle;
+
             // mirror selector state if the selector is open
             if (_selector != SelectorMode.None)
             {
@@ -733,6 +741,27 @@ public partial class MainWindow : Window
         ClipStatus.Visibility = Visibility.Visible;
         _clipStatusTimer.Stop();
         _clipStatusTimer.Start();
+    }
+
+    private async void PowerBattery_Click(object sender, RoutedEventArgs e)
+    {
+        PowerService.SetScheme("Battery");
+        await Task.Delay(300);
+        await RefreshControlsAsync();
+    }
+
+    private async void PowerBalanced_Click(object sender, RoutedEventArgs e)
+    {
+        PowerService.SetScheme("Balanced");
+        await Task.Delay(300);
+        await RefreshControlsAsync();
+    }
+
+    private async void PowerPerformance_Click(object sender, RoutedEventArgs e)
+    {
+        PowerService.SetScheme("Performance");
+        await Task.Delay(300);
+        await RefreshControlsAsync();
     }
 
     // ---------- selector sheet (Wi-Fi / Bluetooth) ----------

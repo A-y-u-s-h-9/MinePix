@@ -17,11 +17,11 @@
     <Window.Resources>
         <!-- iOS-style control tiles -->
         <Style x:Key="IslandMasterTile" TargetType="Border">
-            <Setter Property="Background" Value="#8C202028"/>
-            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="Background" Value="#AA2A2E37"/>
+            <Setter Property="CornerRadius" Value="16"/>
             <Setter Property="BorderBrush" Value="#14FFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Padding" Value="8"/>
         </Style>
 
         <!-- colourless circle toggle: only the glyph colors when active -->
@@ -29,15 +29,15 @@
             <Setter Property="Background" Value="#1FFFFFFF"/>
             <Setter Property="Foreground" Value="#8E8E93"/>
             <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Margin" Value="2"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="28" Width="56" Height="56">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="19" Width="38" Height="38">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </StackPanel>
@@ -57,19 +57,19 @@
         <Style x:Key="IslandCaption" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#D5D5DA"/>
             <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontSize" Value="9"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="MaxWidth" Value="72"/>
+            <Setter Property="MaxWidth" Value="68"/>
         </Style>
 
         <Style x:Key="IslandCaptionSub" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#8E8E93"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontSize" Value="8"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-            <Setter Property="MaxWidth" Value="72"/>
+            <Setter Property="MaxWidth" Value="68"/>
         </Style>
 
         <!-- iOS-style pill switch -->
@@ -233,6 +233,36 @@
                     <Setter Property="Background" Value="#14FFFFFF"/>
                 </Trigger>
             </Style.Triggers>
+        </Style>
+
+        <!-- segmented power-mode buttons -->
+        <Style x:Key="IslandPowerModeButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#B8B8BD"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="19" Padding="10,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#14FFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="IslandPowerModeButtonActive" TargetType="Button" BasedOn="{StaticResource IslandPowerModeButton}">
+            <Setter Property="Background" Value="#F5F5F7"/>
+            <Setter Property="Foreground" Value="#1C1B1F"/>
         </Style>
 
         <Style x:Key="IslandFlatDanger" TargetType="Button" BasedOn="{StaticResource IslandFlatButton}">
@@ -423,15 +453,15 @@
                 <!-- Music card -->
                 <Border Grid.Row="2" x:Name="MusicCard" Background="#3814171C" CornerRadius="14"
                         BorderBrush="#14FFFFFF" BorderThickness="1"
-                        Padding="10" VerticalAlignment="Top" Visibility="Collapsed">
-                    <Grid>
+                        Padding="10" VerticalAlignment="Center" Visibility="Collapsed">
+                    <Grid Height="130">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="64"/>
+                            <ColumnDefinition Width="58"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
                         <!-- artwork -->
-                        <Border Width="64" Height="64" CornerRadius="12" Background="#1FFFFFFF" ClipToBounds="True">
+                        <Border Width="58" Height="58" CornerRadius="10" Background="#1FFFFFFF" ClipToBounds="True" VerticalAlignment="Center">
                             <Grid>
                                 <TextBlock x:Name="MusicArtPlaceholder" Text="&#x266A;" Foreground="#8AB4FF"
                                            FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -439,7 +469,7 @@
                             </Grid>
                         </Border>
 
-                        <Grid Grid.Column="1" Margin="12,0,0,0">
+                        <Grid Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
@@ -448,10 +478,10 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock x:Name="MusicTitle" Text="Nothing playing" Foreground="#F5F5F7"
-                                       FontFamily="Segoe UI Semibold" FontSize="13"
-                                       TextTrimming="CharacterEllipsis"/>
-                            <TextBlock x:Name="MusicArtist" Grid.Row="1" Text="Start something in any media app" Foreground="#A9A9AF"
-                                       FontFamily="Segoe UI" FontSize="11" Margin="0,1,0,0"
+                                       FontFamily="Segoe UI Semibold" FontSize="15"
+                                       TextTrimming="CharacterEllipsis" Margin="0,0,0,1"/>
+                            <TextBlock x:Name="MusicArtist" Grid.Row="1" Text="Start something in any media app" Foreground="#C8C9CD"
+                                       FontFamily="Segoe UI" FontSize="12" Margin="0,0,0,0"
                                        TextTrimming="CharacterEllipsis"/>
 
                             <!-- seek bar -->
@@ -702,15 +732,14 @@
             </Grid>
         </Grid>
 
-                <!-- Controls panel (iOS style): two tall sliders + circle grid -->
+                <!-- Controls panel (iOS style): sliders tile + Wi-Fi/Bluetooth + power selector -->
                 <Grid Grid.Row="2" x:Name="ControlsPanel" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="1.35*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- one tile, both sliders -->
+                    <!-- sliders tile (full height) -->
                     <Border Grid.Column="0" Margin="1,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="SlidersTile">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -726,12 +755,12 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" x:Name="VolumePercent" Text="0%" Foreground="#8E8E93"
-                                           FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,6"/>
-                                <Border Grid.Row="1" x:Name="VolumeTrack" Width="46" CornerRadius="13"
+                                           FontFamily="Segoe UI" FontSize="11" HorizontalAlignment="Center" Margin="0,4,0,2"/>
+                                <Border Grid.Row="1" x:Name="VolumeTrack" Width="50" CornerRadius="14"
                                         Background="#141B22" Cursor="Hand" HorizontalAlignment="Center"
                                         ClipToBounds="True" MouseDown="VolumeTrack_MouseDown"
                                         MouseMove="VolumeTrack_MouseMove" MouseUp="VolumeTrack_MouseUp">
-                                    <Border x:Name="VolumeFill" Background="#F5F5F7" CornerRadius="11"
+                                    <Border x:Name="VolumeFill" Background="#F5F5F7" CornerRadius="12"
                                             VerticalAlignment="Bottom" Height="0"/>
                                 </Border>
                                 <Button Grid.Row="2" x:Name="MuteButton" Content="&#x1F50A;" Style="{StaticResource IslandFlatButton}"
@@ -765,27 +794,56 @@
                         </Grid>
                     </Border>
 
-                    <!-- Wi-Fi tile -->
-                    <Border Grid.Column="1" Margin="0,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="WifiTile">
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <ToggleButton x:Name="WifiToggle" Content="&#x1F4F6;" FontFamily="Segoe UI Emoji"
-                                          Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"
-                                          HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="WifiCaption" Text="Wi-Fi" Style="{StaticResource IslandCaption}" Margin="0,8,0,0"/>
-                            <TextBlock x:Name="WifiSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- right pane: Wi-Fi + Bluetooth top, power selector fills body -->
+                    <Grid Grid.Column="1" Margin="8,0,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <!-- Bluetooth tile -->
-                    <Border Grid.Column="2" Margin="0,0,1,0" Style="{StaticResource IslandMasterTile}" x:Name="BluetoothTile">
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <ToggleButton x:Name="BluetoothToggle" Content="BT"
-                                          Style="{StaticResource IslandCircleToggle}" Click="BluetoothToggle_Click"
-                                          FontFamily="Segoe UI Semibold" FontSize="17" HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="BluetoothCaption" Text="Bluetooth" Style="{StaticResource IslandCaption}" Margin="0,8,0,0"/>
-                            <TextBlock x:Name="BluetoothSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,1,0,0"/>
-                        </StackPanel>
-                    </Border>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Wi-Fi tile -->
+                            <Border Grid.Column="0" Margin="0,0,4,0" Style="{StaticResource IslandMasterTile}" x:Name="WifiTile">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <ToggleButton x:Name="WifiToggle" Content="&#x1F4F6;" FontFamily="Segoe UI Emoji"
+                                                  Style="{StaticResource IslandCircleToggle}" Click="WifiToggle_Click"
+                                                  HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="WifiCaption" Text="Wi-Fi" Style="{StaticResource IslandCaption}" Margin="0,8,0,0"/>
+                                    <TextBlock x:Name="WifiSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Bluetooth tile -->
+                            <Border Grid.Column="1" Margin="4,0,0,0" Style="{StaticResource IslandMasterTile}" x:Name="BluetoothTile">
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                    <ToggleButton x:Name="BluetoothToggle" Content="BT" FontFamily="Segoe UI Semibold" FontSize="17"
+                                                  Style="{StaticResource IslandCircleToggle}" Click="BluetoothToggle_Click"
+                                                  HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="BluetoothCaption" Text="Bluetooth" Style="{StaticResource IslandCaption}" Margin="0,8,0,0"/>
+                                    <TextBlock x:Name="BluetoothSubCaption" Text="Off" Style="{StaticResource IslandCaptionSub}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- power plan selector — same tiled look -->
+                        <Border Grid.Row="1" Style="{StaticResource IslandMasterTile}" Margin="0,8,0,0" Padding="6">
+                            <Grid VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="PowerBatteryButton" Grid.Column="0" Content="Battery" Style="{StaticResource IslandPowerModeButton}" Click="PowerBattery_Click"/>
+                                <Button x:Name="PowerBalancedButton" Grid.Column="1" Content="Balanced" Style="{StaticResource IslandPowerModeButton}" Click="PowerBalanced_Click"/>
+                                <Button x:Name="PowerPerformanceButton" Grid.Column="2" Content="Performance" Style="{StaticResource IslandPowerModeButton}" Click="PowerPerformance_Click"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
                 </Grid>
             </Grid>
         </Grid>
