@@ -367,40 +367,48 @@
         </Style>
     </Window.Resources>
 
-    <Border x:Name="Island"
-            CornerRadius="{DynamicResource PillRadius}"
-            Background="#591E1D23"
-            Padding="16,0"
-            ClipToBounds="True"
-            RenderTransformOrigin="0.5,0">
-        <Border.RenderTransform>
-            <ScaleTransform x:Name="IslandMorphScale" ScaleX="1" ScaleY="1"/>
-        </Border.RenderTransform>
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
-        </Border.Effect>
-        <Grid>
-            <!-- soft top glow — a single floating light inside the capsule, clipped naturally -->
-            <Ellipse Fill="{StaticResource SpecularBlob}" Margin="20,-30,20,0"
-                     IsHitTestVisible="False" VerticalAlignment="Top" Height="160" Opacity="0.5"/>
+    <Grid>
+        <!-- glass body — its width/height are animated during the morph (not scaled:
+             scaling squashes the drop shadow and the decorative glow into a flat smear) -->
+        <Border x:Name="IslandGlass"
+                CornerRadius="{DynamicResource PillRadius}"
+                Background="#591E1D23"
+                ClipToBounds="True"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
+            </Border.Effect>
+            <Grid>
+                <!-- soft top glow — a single floating light inside the capsule, clipped naturally -->
+                <Ellipse Fill="{StaticResource SpecularBlob}" Margin="20,-30,20,0"
+                         IsHitTestVisible="False" VerticalAlignment="Top" Height="160" Opacity="0.5"/>
 
-            <!-- travelling glint — a specular dot that sweeps left→right periodically -->
-            <Ellipse x:Name="TravellingGlint"
-                     Fill="{StaticResource GlintBrush}"
-                     Width="70" Height="24"
-                     HorizontalAlignment="Left"
-                     IsHitTestVisible="False"
-                     Margin="-70,0,0,0"
-                     VerticalAlignment="Center"
-                     Opacity="0.55">
-                <Ellipse.RenderTransform>
-                    <TranslateTransform x:Name="TravellingGlintTransform"/>
-                </Ellipse.RenderTransform>
-            </Ellipse>
+                <!-- travelling glint — a specular dot that sweeps left→right periodically -->
+                <Ellipse x:Name="TravellingGlint"
+                         Fill="{StaticResource GlintBrush}"
+                         Width="70" Height="24"
+                         HorizontalAlignment="Left"
+                         IsHitTestVisible="False"
+                         Margin="-70,0,0,0"
+                         VerticalAlignment="Center"
+                         Opacity="0.55">
+                    <Ellipse.RenderTransform>
+                        <TranslateTransform x:Name="TravellingGlintTransform"/>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
+            </Grid>
+        </Border>
+
+        <!-- content — stays crisp; an animated rounded-rect clip reveals it as the body grows -->
+        <Grid x:Name="IslandContentHost">
+            <Grid.Clip>
+                <RectangleGeometry x:Name="IslandContentClip" Rect="0,0,480,270" RadiusX="22" RadiusY="22"/>
+            </Grid.Clip>
 
             <!-- Collapsed pill -->
-            <Grid x:Name="PillView" Height="44" VerticalAlignment="Top">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
+            <Grid x:Name="PillView" Width="220" Height="44" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="16,0,0,0">
                     <Ellipse x:Name="PillDot" Width="8" Height="8" Fill="#8AB4FF" VerticalAlignment="Center"/>
                     <TextBlock x:Name="PillNote" Text="&#x266A;" Foreground="#8AB4FF" FontSize="13"
                                VerticalAlignment="Center" Visibility="Collapsed"/>
@@ -419,6 +427,7 @@
                            FontFamily="Segoe UI"
                            FontSize="12"
                            HorizontalAlignment="Right"
+                           Margin="0,0,16,0"
                            VerticalAlignment="Center"/>
             </Grid>
 
@@ -426,7 +435,7 @@
             <Grid x:Name="ExpandedView"
                   Visibility="Collapsed"
                   Opacity="0"
-                  Margin="0,12,0,12">
+                  Margin="16,12,16,12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="10"/>
@@ -642,6 +651,7 @@
 
         <!-- selector sheet (Wi-Fi / Bluetooth) -->
         <Grid Grid.Row="2" x:Name="SelectorPanel" Visibility="Collapsed"
+              Margin="16,0,16,0"
               Background="#D525262C">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -865,7 +875,7 @@
                 </Grid>
             </Grid>
         </Grid>
-    </Border>
+    </Grid>
 </Window>
 
 

@@ -109,9 +109,6 @@ public partial class MainWindow : Window
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_SETTINGS") == "1")
             Dispatcher.BeginInvoke(new Action(() => { var w = new SettingsWindow(_settings) { Owner = this }; w.Show(); }), DispatcherPriority.Loaded);
 
-        // prime the music UI so the idle card is visible immediately
-        RefreshMusicUi();
-
         // dev affordance: force the expanded card open (used for headless screenshots/tests)
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1")
             Dispatcher.BeginInvoke(new Action(Expand), DispatcherPriority.Loaded);
@@ -152,6 +149,12 @@ public partial class MainWindow : Window
 
         // pill content fills exactly the collapsed pill height so it sits vertically centered
         PillView.Height = ComputeCollapsedHeight();
+        PillView.Width = _settings.CollapsedWidth;
+
+        // keep the content clip in sync with the collapsed footprint
+        _morphW = ComputeCollapsedWidth();
+        _morphH = ComputeCollapsedHeight();
+        ApplyMorphVisual(1.0, 1.0);
 
         // ensure window follows the mode's defaults when collapsed
         if (!_expanded)
@@ -251,7 +254,7 @@ public partial class MainWindow : Window
         gradient.GradientStops.Add(new GradientStop(mid, 0.5));
         gradient.GradientStops.Add(new GradientStop(bot, 1.0));
 
-        Island.Background = gradient;
+        IslandGlass.Background = gradient;
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -403,6 +406,7 @@ public partial class MainWindow : Window
     private bool _morphExpanding;
     private MorphSpring _morphSx, _morphSy;
     private DateTime _lastMorphFrameUtc;
+    private double _morphW, _morphH;   // window size the morph is working in (clip space)
 
     private struct MorphSpring
     {
@@ -436,10 +440,13 @@ public partial class MainWindow : Window
         double toW = _settings.ExpandedWidth, toH = _activeExpandedHeight;
         double newLeft = CenteredLeft(toW);
 
-        // size the canvas to its final bounds up front; the border scales from the pill footprint
-        Left = newLeft;
-        Width = toW;
-        Height = toH;
+        // Put the body into its pill footprint FIRST, then resize the window in one atomic
+        // native call. Two separate Width/Height sets would let the compositor paint an
+        // intermediate frame (wide + short + unrounded slab) — the "weird moment".
+        _morphW = toW;
+        _morphH = toH;
+        ApplyMorphVisual(fromW / toW, fromH / toH);
+        ResizeWindowAtomically(newLeft, Top, toW, toH);
 
         PillView.Visibility = Visibility.Visible;
         PillView.Opacity = 1;
@@ -464,6 +471,10 @@ public partial class MainWindow : Window
         PillView.Opacity = 0;
         ExpandedView.Visibility = Visibility.Visible;
 
+        // the window stays expanded-size during the shrink, so the clip works in that space
+        _morphW = fromW;
+        _morphH = fromH;
+
         BeginMorph(expanding: false, 1.0, 1.0, toW / fromW, toH / fromH);
 
         AnimateOpacity(ExpandedView, 0, 120, () => ExpandedView.Visibility = Visibility.Collapsed);
@@ -478,8 +489,7 @@ public partial class MainWindow : Window
         _morphExpanding = expanding;
         _morphSx = new MorphSpring(sx0, sxT);
         _morphSy = new MorphSpring(sy0, syT);
-        IslandMorphScale.ScaleX = sx0;
-        IslandMorphScale.ScaleY = sy0;
+        ApplyMorphVisual(sx0, sy0);
         _lastMorphFrameUtc = DateTime.UtcNow;
         _morphRunning = true;
         CompositionTarget.Rendering += MorphRendering;
@@ -493,11 +503,44 @@ public partial class MainWindow : Window
         if (dt <= 0 || dt > 0.05)
             dt = 1.0 / 60.0; // clamped — every frame gets a sane step
 
-        IslandMorphScale.ScaleX = _morphSx.Update(dt);
-        IslandMorphScale.ScaleY = _morphSy.Update(dt);
+        ApplyMorphVisual(_morphSx.Update(dt), _morphSy.Update(dt));
 
         if (_morphSx.Settled && _morphSy.Settled)
             CompleteMorph();
+    }
+
+    /// <summary>
+    /// Drives both halves of the morph: the glass body's own width/height are animated (so the
+    /// drop shadow and the inner glow follow the shape instead of being squashed into a smear),
+    /// while the content stays pixel-crisp and is revealed through a matching rounded-rect clip.
+    /// </summary>
+    private void ApplyMorphVisual(double sx, double sy)
+    {
+        // use the morph's target window size, not the live layout size — right after a resize
+        // the layout hasn't caught up yet, and a stale size clips the content away for a frame
+        double w = _morphW, h = _morphH;
+        if (w <= 0 || h <= 0)
+            return;
+
+        double gw = w * sx, gh = h * sy;
+        IslandGlass.Width = gw;
+        IslandGlass.Height = gh;
+
+        IslandContentClip.Rect = new Rect((w - gw) / 2, 0, gw, gh);
+        IslandContentClip.RadiusX = Math.Min(IslandCornerRadius, gh / 2);
+        IslandContentClip.RadiusY = Math.Min(IslandCornerRadius, gh / 2);
+    }
+
+    private double IslandCornerRadius
+    {
+        get
+        {
+            if (Resources["PillRadius"] is CornerRadius cr)
+                return cr.TopLeft == cr.TopRight && cr.TopRight == cr.BottomRight && cr.BottomRight == cr.BottomLeft
+                    ? cr.TopLeft
+                    : 0; // classic notch has flat top corners — square clip
+            return 0;
+        }
     }
 
     private void CompleteMorph()
@@ -507,23 +550,60 @@ public partial class MainWindow : Window
 
         if (_morphExpanding)
         {
-            IslandMorphScale.ScaleX = 1;
-            IslandMorphScale.ScaleY = 1;
+            ApplyMorphVisual(1.0, 1.0);
         }
         else
         {
-            // hand the window back to the pill footprint and reset for the next expand
-            Width = ComputeCollapsedWidth();
-            Height = ComputeCollapsedHeight();
-            Left = CenteredLeft(Width);
-            IslandMorphScale.ScaleX = 1;
-            IslandMorphScale.ScaleY = 1;
+            // hand the window back to the pill footprint and reset for the next expand.
+            // Visual first (the island already looks like the pill), then one atomic resize,
+            // then reset so the body fills the small window exactly.
+            ApplyMorphVisual(_morphSx.Target, _morphSy.Target);
+            double toW = ComputeCollapsedWidth(), toH = ComputeCollapsedHeight();
+            ResizeWindowAtomically(CenteredLeft(toW), Top, toW, toH);
+            _morphW = toW;
+            _morphH = toH;
+            ApplyMorphVisual(1.0, 1.0);
             ExpandedView.Visibility = Visibility.Collapsed;
             ExpandedView.Opacity = 0;
             PillView.Opacity = 1;
             PillView.Visibility = Visibility.Visible;
         }
     }
+
+    /// <summary>
+    /// Moves and resizes the window in a single native call. Setting Left/Top/Width/Height
+    /// individually issues separate native resizes, and the compositor can paint the
+    /// half-resized island in between (a wide, short, unrounded slab for one frame).
+    /// </summary>
+    private void ResizeWindowAtomically(double leftDip, double topDip, double widthDip, double heightDip)
+    {
+        IntPtr hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero)
+        {
+            Left = leftDip; Top = topDip; Width = widthDip; Height = heightDip;
+            return;
+        }
+
+        double dpi = GetDpiScale();
+        int x = (int)Math.Round(leftDip * dpi);
+        int y = (int)Math.Round(topDip * dpi);
+        int w = (int)Math.Round(widthDip * dpi);
+        int h = (int)Math.Round(heightDip * dpi);
+        SetWindowPos(hwnd, IntPtr.Zero, x, y, w, h, SwpNoZOrder | SwpNoActivate);
+    }
+
+    private double GetDpiScale()
+    {
+        var src = PresentationSource.FromVisual(this);
+        return src?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
+    }
+
+    private const uint SwpNoZOrder = 0x0004;
+    private const uint SwpNoActivate = 0x0010;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
+                                            int X, int Y, int cx, int cy, uint uFlags);
 
     private void AnimateOpacity(UIElement element, double to, int durationMs, Action? onCompleted = null)
     {
