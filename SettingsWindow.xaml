@@ -394,8 +394,11 @@
                             <TextBlock Text="All settings are already saved. Apply restarts the island with the new configuration." Style="{StaticResource SettingHint}"/>
                             <Button x:Name="ApplyButton" Style="{StaticResource ApplyButton}" Content="Apply — restart MinePix"
                                     HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="ApplyButton_Click"/>
+                            <Button x:Name="ResetDefaultsButton" Style="{StaticResource FlatButtonDanger}" Content="Reset to defaults"
+                                    Margin="0,4,0,0" Click="ResetDefaults_Click"/>
                         </StackPanel>
                     </Border>
+
                 </StackPanel>
             </ScrollViewer>
         </Grid>

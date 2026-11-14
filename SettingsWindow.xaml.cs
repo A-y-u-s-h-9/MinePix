@@ -13,7 +13,13 @@ public partial class SettingsWindow : Window
         _settings = settings;
         InitializeComponent();
 
-        // Reflect current settings into the UI
+        SyncUiFromSettings();
+        _loading = false;
+    }
+
+    /// <summary>Reflects the current settings instance into every control.</summary>
+    private void SyncUiFromSettings()
+    {
         ThemeGraphite.IsChecked = _settings.Theme?.ToLowerInvariant() is "graphite" or null;
         ThemeGlass.IsChecked = _settings.Theme?.ToLowerInvariant() == "glass";
         ThemeBlack.IsChecked = _settings.Theme?.ToLowerInvariant() == "black";
@@ -34,8 +40,6 @@ public partial class SettingsWindow : Window
 
         CollapseDelaySlider.Value = _settings.CollapseDelayMs;
         CollapseDelayLabel.Text = $"{_settings.CollapseDelayMs} ms";
-
-        _loading = false;
     }
 
     private void Persist()
@@ -81,7 +85,14 @@ public partial class SettingsWindow : Window
     private void StartWithWindowsSwitch_Click(object sender, RoutedEventArgs e)
     {
         _settings.StartWithWindows = StartWithWindowsSwitch.IsChecked == true;
-        if (_settings.StartWithWindows)
+        SyncAutoStart(_settings.StartWithWindows);
+        Persist();
+    }
+
+    /// <summary>Creates or deletes the HKCU Run key so autostart matches the setting.</summary>
+    private static void SyncAutoStart(bool enabled)
+    {
+        if (enabled)
         {
             try
             {
@@ -95,7 +106,6 @@ public partial class SettingsWindow : Window
         {
             try { Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true)?.DeleteValue("MinePix", false); } catch { }
         }
-        Persist();
     }
 
     private void ClipboardEnabledSwitch_Click(object sender, RoutedEventArgs e)
@@ -148,6 +158,43 @@ public partial class SettingsWindow : Window
         }
         catch { }
         Application.Current.Shutdown();
+    }
+
+    private void ResetDefaults_Click(object sender, RoutedEventArgs e)
+    {
+        var dr = MessageBox.Show(
+            this,
+            "Reset all MinePix settings to their factory defaults?\nThis overwrites your current configuration.",
+            "MinePix — Settings",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (dr != MessageBoxResult.Yes)
+            return;
+
+        var d = new Settings();
+        _settings.Theme = d.Theme;
+        _settings.UseDynamicIsland = d.UseDynamicIsland;
+        _settings.StartWithWindows = d.StartWithWindows;
+        _settings.ShowMusicInPill = d.ShowMusicInPill;
+        _settings.ClipboardEnabled = d.ClipboardEnabled;
+        _settings.ClipboardMaxItems = d.ClipboardMaxItems;
+        _settings.CollapsedWidth = d.CollapsedWidth;
+        _settings.CollapsedHeight = d.CollapsedHeight;
+        _settings.ExpandedWidth = d.ExpandedWidth;
+        _settings.ExpandedHeight = d.ExpandedHeight;
+        _settings.IslandTopOffset = d.IslandTopOffset;
+        _settings.CollapseDelayMs = d.CollapseDelayMs;
+
+        // keep the autostart registry entry consistent with the reset default
+        SyncAutoStart(_settings.StartWithWindows);
+
+        _loading = true;
+        SyncUiFromSettings();
+        _loading = false;
+
+        // applies live (theme, sizes, offset, delay) via the shared settings + Owner refresh
+        Persist();
     }
 
     private void CollapseDelaySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
