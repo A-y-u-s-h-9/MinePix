@@ -140,7 +140,7 @@ public partial class MainWindow : Window
             // a full capsule: dynamic island shape, not a notch
             Resources["PillRadius"] = new CornerRadius(22);
             PillDot.Width = 10; PillDot.Height = 10;
-            PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x1F));
+            PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0xB4, 0xFF));
         }
         else
         {
@@ -149,6 +149,9 @@ public partial class MainWindow : Window
             PillDot.Width = 8; PillDot.Height = 8;
             PillDot.Fill = new SolidColorBrush(Color.FromRgb(0x8A, 0xB4, 0xFF));
         }
+
+        // pill content fills exactly the collapsed pill height so it sits vertically centered
+        PillView.Height = ComputeCollapsedHeight();
 
         // ensure window follows the mode's defaults when collapsed
         if (!_expanded)
