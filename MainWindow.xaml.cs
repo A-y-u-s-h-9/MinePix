@@ -17,6 +17,7 @@ public partial class MainWindow : Window
 {
     private readonly Settings _settings;
     private readonly DispatcherTimer _collapseTimer;
+    private readonly DispatcherTimer _hoverCheckTimer;
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _mediaTimer;
     private readonly DispatcherTimer _clipStatusTimer;
@@ -52,6 +53,21 @@ public partial class MainWindow : Window
 
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
         _collapseTimer.Tick += (_, _) => { _collapseTimer.Stop(); Collapse(); };
+
+        // polling backstop — the Island's hit-test region can flake (transparent borders, edge cases),
+        // so confirm the cursor is actually inside before we collapse.
+        _hoverCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(60) };
+        _hoverCheckTimer.Tick += (_, _) =>
+        {
+            if (!_expanded) return;
+            var p = System.Windows.Input.Mouse.GetPosition(this);
+            bool inside = p.X >= 0 && p.Y >= 0 && p.X <= ActualWidth && p.Y <= ActualHeight;
+            if (inside)
+                _collapseTimer.Stop();
+            else if (!_collapseTimer.IsEnabled)
+                _collapseTimer.Start();
+        };
+        _hoverCheckTimer.Start();
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => PillClock.Text = DateTime.Now.ToString("HH:mm");

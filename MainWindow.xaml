@@ -854,7 +854,7 @@
                                     <TextBlock x:Name="BatteryGlyph" Text="&#x1F50B;" FontFamily="Segoe UI Emoji" FontSize="26"
                                                HorizontalAlignment="Center"/>
                                     <TextBlock x:Name="BatteryPercent" Text="--" Foreground="#30D158"
-                                               FontFamily="Segoe UI Semibold" FontSize="22"
+                                               FontFamily="Segoe UI Semibold" FontSize="16"
                                                HorizontalAlignment="Center"/>
                                     <TextBlock x:Name="BatteryStatus" Text="" Foreground="#8E8E93" FontFamily="Segoe UI"
                                                FontSize="10" HorizontalAlignment="Center"/>
@@ -870,9 +870,9 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Button x:Name="PowerBatteryButton" Content="Battery" Style="{StaticResource IslandPowerModeButton}" Click="PowerBattery_Click"/>
-                                <Button x:Name="PowerBalancedButton" Content="Balanced" Style="{StaticResource IslandPowerModeButton}" Click="PowerBalanced_Click"/>
-                                <Button x:Name="PowerPerformanceButton" Content="Performance" Style="{StaticResource IslandPowerModeButton}" Click="PowerPerformance_Click"/>
+                                <Button x:Name="PowerBatteryButton" Grid.Column="0" Content="Battery" Style="{StaticResource IslandPowerModeButton}" Click="PowerBattery_Click"/>
+                                <Button x:Name="PowerBalancedButton" Grid.Column="1" Content="Balanced" Style="{StaticResource IslandPowerModeButton}" Click="PowerBalanced_Click"/>
+                                <Button x:Name="PowerPerformanceButton" Grid.Column="2" Content="Performance" Style="{StaticResource IslandPowerModeButton}" Click="PowerPerformance_Click"/>
                             </Grid>
                         </Border>
                     </StackPanel>
