@@ -454,7 +454,7 @@
                 <Border Grid.Row="2" x:Name="MusicCard" Background="#3814171C" CornerRadius="14"
                         BorderBrush="#14FFFFFF" BorderThickness="1"
                         Padding="10" VerticalAlignment="Center" Visibility="Collapsed">
-                    <Grid Height="130">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="58"/>
                             <ColumnDefinition Width="*"/>

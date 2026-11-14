@@ -6,8 +6,8 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="NoResize"
-        Background="Transparent"
-        AllowsTransparency="True">
+        Background="#000000"
+        AllowsTransparency="False">
     <Window.Resources>
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#8E8E93"/>
@@ -16,10 +16,12 @@
             <Setter Property="Margin" Value="0,16,0,8"/>
         </Style>
         <Style x:Key="SettingRow" TargetType="Border">
-            <Setter Property="Background" Value="#141FFFFF"/>
+            <Setter Property="Background" Value="#121218"/>
             <Setter Property="CornerRadius" Value="10"/>
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="BorderBrush" Value="#1E1E26"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style x:Key="SettingLabel" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#F5F5F7"/>
@@ -35,7 +37,7 @@
 
         <!-- iOS-style pill switch -->
         <Style x:Key="IslandSwitch" TargetType="ToggleButton">
-            <Setter Property="Background" Value="#1FFFFFFF"/>
+            <Setter Property="Background" Value="#181820"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0"/>
@@ -50,6 +52,44 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter Property="Background" Value="#8AB4FF"/>
                                 <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- dark slim scrollbar -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="7"/>
+            <Setter Property="MinWidth" Value="7"/>
+            <Setter Property="Margin" Value="4,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid x:Name="Root" Background="Transparent" Width="7">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb x:Name="Thumb" Background="#3DFFFFFF">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="3.5"
+                                                        SnapsToDevicePixels="True"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.LineDownCommand" Background="Transparent" BorderThickness="0"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.LineUpCommand" Background="Transparent" BorderThickness="0"/>
+                                </Track.DecreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Thumb" Property="Background" Value="#5CFFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -78,9 +118,53 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#141FFFFF"/>
+                    <Setter Property="Background" Value="#1A1A22"/>
                 </Trigger>
             </Style.Triggers>
+        </Style>
+
+        <!-- custom dark slider (iOS feel): 4px track, accent fill, white thumb -->
+        <Style x:Key="DarkSlider" TargetType="Slider">
+            <Setter Property="Minimum" Value="0"/>
+            <Setter Property="Maximum" Value="100"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="22" VerticalAlignment="Center">
+                            <Border Height="4" CornerRadius="2" Background="#1F1F26" VerticalAlignment="Center"/>
+                            <Track x:Name="PART_Track" Height="22" VerticalAlignment="Center">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" Background="#8AB4FF" BorderThickness="0">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="{TemplateBinding Background}" Height="4" CornerRadius="2" VerticalAlignment="Center"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False" Background="Transparent" BorderThickness="0">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="Transparent" Height="4" VerticalAlignment="Center"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="18" Height="18">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Fill="#F5F5F7" Stroke="#40000000" StrokeThickness="1"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="FlatButtonDanger" TargetType="Button" BasedOn="{StaticResource FlatButton}">
@@ -89,7 +173,7 @@
 
         <!-- segmented theme buttons -->
         <Style x:Key="ThemeButton" TargetType="ToggleButton">
-            <Setter Property="Background" Value="#14FFFFFF"/>
+            <Setter Property="Background" Value="#181820"/>
             <Setter Property="Foreground" Value="#B8B8BD"/>
             <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
             <Setter Property="FontSize" Value="12"/>
@@ -112,14 +196,15 @@
                     <Setter Property="Foreground" Value="#0D1B2A"/>
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1FFFFFFF"/>
+                    <Setter Property="Background" Value="#20202A"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
+
     </Window.Resources>
 
-    <!-- outer frame -->
-    <Border CornerRadius="22" Background="#261E1F25" BorderBrush="#14FFFFFF" BorderThickness="1" Padding="0">
+    <!-- outer frame — opaque black -->
+    <Border CornerRadius="14" Background="#000000" BorderBrush="#1E1E26" BorderThickness="1" Padding="0">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -127,7 +212,7 @@
             </Grid.RowDefinitions>
 
             <!-- title bar -->
-            <Border Grid.Row="0" Background="#14FFFFFF" CornerRadius="22,22,0,0" Height="44" MouseDown="TitleBar_MouseDown">
+            <Border Grid.Row="0" Background="#101016" CornerRadius="14,14,0,0" Height="44" MouseDown="TitleBar_MouseDown">
                 <Grid>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                         <Border Width="10" Height="10" CornerRadius="5" Background="#8AB4FF"/>
@@ -226,15 +311,15 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="Collapsed width" Style="{StaticResource SettingLabel}"/>
-                                <Slider x:Name="CollapsedWidthSlider" Minimum="180" Maximum="360" TickPlacement="None"
-                                        Value="220" Margin="0,8,0,0" ValueChanged="CollapsedWidthSlider_ValueChanged"/>
-                                <TextBlock x:Name="CollapsedWidthLabel" Text="220 px" Foreground="#8E8E93" FontSize="10"/>
+                                <Slider x:Name="CollapsedWidthSlider" Style="{StaticResource DarkSlider}" Minimum="180" Maximum="360" TickPlacement="None"
+                                        Value="220" Margin="0,6,0,0" ValueChanged="CollapsedWidthSlider_ValueChanged"/>
+                                <TextBlock x:Name="CollapsedWidthLabel" Text="220 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Expanded height" Style="{StaticResource SettingLabel}"/>
-                                <Slider x:Name="ExpandedHeightSlider" Minimum="120" Maximum="420" TickPlacement="None"
-                                        Value="235" Margin="0,8,0,0" ValueChanged="ExpandedHeightSlider_ValueChanged"/>
-                                <TextBlock x:Name="ExpandedHeightLabel" Text="235 px" Foreground="#8E8E93" FontSize="10"/>
+                                <Slider x:Name="ExpandedHeightSlider" Style="{StaticResource DarkSlider}" Minimum="160" Maximum="420" TickPlacement="None"
+                                        Value="270" Margin="0,6,0,0" ValueChanged="ExpandedHeightSlider_ValueChanged"/>
+                                <TextBlock x:Name="ExpandedHeightLabel" Text="270 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -243,9 +328,9 @@
                         <StackPanel>
                             <TextBlock Text="Collapse delay" Style="{StaticResource SettingLabel}"/>
                             <TextBlock Text="How long to wait after the pointer leaves before collapsing the island" Style="{StaticResource SettingHint}"/>
-                            <Slider x:Name="CollapseDelaySlider" Minimum="100" Maximum="1000" TickPlacement="None"
-                                    Value="250" Margin="0,8,0,0" ValueChanged="CollapseDelaySlider_ValueChanged"/>
-                            <TextBlock x:Name="CollapseDelayLabel" Text="250 ms" Foreground="#8E8E93" FontSize="10"/>
+                            <Slider x:Name="CollapseDelaySlider" Style="{StaticResource DarkSlider}" Minimum="100" Maximum="1000" TickPlacement="None"
+                                    Value="250" Margin="0,6,0,0" ValueChanged="CollapseDelaySlider_ValueChanged"/>
+                            <TextBlock x:Name="CollapseDelayLabel" Text="250 ms" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 

@@ -446,11 +446,11 @@ public partial class MainWindow : Window
         switch (tab)
         {
             case "clipboard":
-                _activeExpandedHeight = 330;
+                _activeExpandedHeight = _settings.ExpandedHeight;
                 RefreshClipboardList();
                 break;
             case "controls":
-                _activeExpandedHeight = 330;
+                _activeExpandedHeight = _settings.ExpandedHeight;
                 _ = RefreshControlsAsync();
                 break;
             case "music":
