@@ -441,7 +441,7 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="IconBarCentered">
-                        <Button x:Name="IconMusic"     Content="&#x266A;" Style="{StaticResource IslandIconButton}" Click="IconMusic_Click"     Tag="music"     ToolTip="Music"/>
+                        <Button x:Name="IconMusic"     Content="&#x266A;" FontSize="17" Style="{StaticResource IslandIconButton}" Click="IconMusic_Click"     Tag="music"     ToolTip="Music"/>
                         <Button x:Name="IconClipboard" Content="&#x1F4CB;" Style="{StaticResource IslandIconButton}" Click="IconClipboard_Click" Tag="clipboard" ToolTip="Clipboard"/>
                         <Button x:Name="IconControls"  Click="IconControls_Click"  Tag="controls"
                                 Style="{StaticResource IslandIconButton}" ToolTip="Controls">
