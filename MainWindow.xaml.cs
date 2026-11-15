@@ -399,18 +399,20 @@ public partial class MainWindow : Window
     // ---------- hover morph (vsync-aligned damped springs on the Island border) ----------
 
     // Columns are sized 0..1 of scale; the pill footprint maps from the collapsed width/height.
-    private const double MorphStiffness = 160;   // spring constant — higher = snappier
-    private const double MorphDamping   = 13;    // damping — slight overshoot, no wobble
+    private const double MorphStiffness = 170;   // spring constant — higher = snappier
+    private const double MorphDamping   = 15;    // damping — slight overshoot, no wobble
 
     private bool _morphRunning;
     private bool _morphExpanding;
     private MorphSpring _morphSx, _morphSy, _morphP;
     private DateTime _lastMorphFrameUtc;
     private double _morphW, _morphH;   // window size the morph is working in (clip space)
+    private System.Windows.Media.Effects.Effect? _islandEffect;
 
     private struct MorphSpring
     {
         private double _pos, _vel;
+        private double _floor;   // the spring may never go below this
         public double Target { get; private set; }
 
         public MorphSpring(double start, double target)
@@ -418,6 +420,12 @@ public partial class MainWindow : Window
             _pos = start;
             _vel = 0;
             Target = target;
+            // A free spring overshoots past its target by a fraction of the distance it
+            // travelled. On the collapse that meant the island shrank *below* the pill size —
+            // a thin sliver that then sprang back (the "flicker"), and the wildly changing
+            // height made the corners whip around. The body may only overshoot towards the
+            // larger size, never past the smaller one.
+            _floor = Math.Min(start, target);
         }
 
         public double Update(double dt)
@@ -425,6 +433,11 @@ public partial class MainWindow : Window
             double force = -MorphStiffness * (_pos - Target) - MorphDamping * _vel;
             _vel += force * dt;
             _pos += _vel * dt;
+            if (_pos < _floor)
+            {
+                _pos = _floor;
+                if (_vel < 0) _vel = 0;
+            }
             return _pos;
         }
 
@@ -491,6 +504,13 @@ public partial class MainWindow : Window
         _morphSx = new MorphSpring(sx0, sxT);
         _morphSy = new MorphSpring(sy0, syT);
         _morphP = new MorphSpring(p0, p1);
+
+        // The blurred drop shadow is re-rasterised whenever the body changes shape, and its
+        // soft edge visibly crawls while the body morphs. Drop it for the duration of the
+        // morph (the body then has crisp corners) and put it back when it settles.
+        _islandEffect = IslandGlass.Effect;
+        IslandGlass.Effect = null;
+
         ApplyMorphVisual(sx0, sy0, p0);
         _lastMorphFrameUtc = DateTime.UtcNow;
         _morphRunning = true;
@@ -537,8 +557,12 @@ public partial class MainWindow : Window
 
         double rest = IslandRestRadius;
         double t = Math.Clamp(progress, 0.0, 1.0);
+        // smoothstep: the radius stays proportional to the body (a capsule) for most of the
+        // morph and eases to the resting radius at the end — a linear blend made the corner
+        // curvature churn every frame, which read as choppiness.
+        double e = t * t * (3 - 2 * t);
         double radius = rest > 0
-            ? (gh / 2) + (rest - gh / 2) * t          // capsule -> resting radius
+            ? (gh / 2) + (rest - gh / 2) * e      // capsule -> resting radius
             : 0;
         radius = Math.Min(radius, gh / 2);
 
@@ -569,6 +593,7 @@ public partial class MainWindow : Window
     {
         CompositionTarget.Rendering -= MorphRendering;
         _morphRunning = false;
+        IslandGlass.Effect = _islandEffect;   // bring the soft shadow back
 
         if (_morphExpanding)
         {
