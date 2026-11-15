@@ -1,8 +1,37 @@
+using System.Linq;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace MinePix;
+
+/// <summary>Thin display model for the Settings shortcut manager list.</summary>
+internal sealed class ShortcutManagerItem
+{
+    public string Path { get; }
+    public string Glyph { get; }
+
+    public ShortcutManagerItem(string path)
+    {
+        Path = path;
+        Glyph = AppGlyphFor(path);
+    }
+
+    private static string AppGlyphFor(string path)
+    {
+        string n = path.ToLowerInvariant();
+        if (n.Contains("explorer")) return "\U0001F4C1";
+        if (n.Contains("edge"))     return "\U0001F52C";
+        if (n.Contains("terminal") || n.Contains("wt.exe")) return "\U0001F5A5";
+        if (n.Contains("code"))     return "\U0001F4BB";
+        if (n.Contains("notepad")) return "\U0001F4DD";
+        if (n.Contains("calc"))    return "\U0001F9EE";
+        if (n.Contains("paint"))   return "\U0001F3A8";
+        if (n.Contains("settings")) return "⚙";
+        return "\U0001F5A5";
+    }
+}
 
 public partial class SettingsWindow : Window
 {
@@ -48,6 +77,30 @@ public partial class SettingsWindow : Window
 
         CollapseDelaySlider.Value = _settings.CollapseDelayMs;
         CollapseDelayLabel.Text = $"{_settings.CollapseDelayMs} ms";
+
+        RefreshShortcutsManager();
+    }
+
+    private void RefreshShortcutsManager()
+    {
+        var items = _settings.QuickShortcuts
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => new ShortcutManagerItem(p))
+            .ToList();
+
+        ShortcutsManager.ItemsSource = items;
+        NoShortcutsHint.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void RemoveShortcut_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Primitives.ButtonBase btn
+            || btn.CommandParameter is not ShortcutManagerItem item)
+            return;
+        _settings.QuickShortcuts.Remove(item.Path);
+        _settings.QuickShortcuts.RemoveAll(string.IsNullOrWhiteSpace);
+        Persist();
+        RefreshShortcutsManager();
     }
 
     private void Persist()

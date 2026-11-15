@@ -373,6 +373,36 @@
                         </StackPanel>
                     </Border>
 
+                    <TextBlock Text="QUICK SHORTCUTS" Style="{StaticResource SectionHeader}"/>
+
+                    <Border Style="{StaticResource SettingRow}">
+                        <StackPanel>
+                            <TextBlock Text="App shortcuts" Style="{StaticResource SettingLabel}"/>
+                            <TextBlock Text="Manage the apps pinned to the Quick Actions panel" Style="{StaticResource SettingHint}"/>
+                            <ItemsControl x:Name="ShortcutsManager" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#1A1A22" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Glyph}" FontFamily="Segoe UI Emoji" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Path}" Foreground="#F5F5F7" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                <Button Grid.Column="2" Style="{StaticResource FlatButton}" Content="✕" Foreground="#FF6E6E" Padding="8,4"
+                                                        CommandParameter="{Binding}" Click="RemoveShortcut_Click"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock x:Name="NoShortcutsHint" Text="No shortcuts yet — add them from the Quick Actions panel" 
+                                       Foreground="#6E6E73" FontSize="11" Margin="0,4,0,0" Visibility="Collapsed"/>
+                        </StackPanel>
+                    </Border>
+
                     <TextBlock Text="ABOUT" Style="{StaticResource SectionHeader}"/>
 
                     <Border Style="{StaticResource SettingRow}">

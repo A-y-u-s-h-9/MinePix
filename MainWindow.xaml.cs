@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -113,7 +114,8 @@ public partial class MainWindow : Window
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1")
             Dispatcher.BeginInvoke(new Action(Expand), DispatcherPriority.Loaded);
 
-        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") is string forceTab && (forceTab == "clipboard" || forceTab == "controls"))
+        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") is string forceTab &&
+            (forceTab == "clipboard" || forceTab == "controls" || forceTab == "actions"))
             Dispatcher.BeginInvoke(new Action(() => { Expand(); SetTab(forceTab); }), DispatcherPriority.Loaded);
 
         var forceSelector = Environment.GetEnvironmentVariable("MINEPIX_FORCE_SELECTOR");
@@ -791,11 +793,13 @@ public partial class MainWindow : Window
         IconMusic.Style = tab == "music" ? activeStyle : inactiveStyle;
         IconClipboard.Style = tab == "clipboard" ? activeStyle : inactiveStyle;
         IconControls.Style = tab == "controls" ? activeStyle : inactiveStyle;
+        IconActions.Style = tab == "actions" ? activeStyle : inactiveStyle;
         IconSettings.Style = inactiveStyle; // settings is momentary (opens window)
 
         MusicCard.Visibility = tab == "music" && MusicService.Instance.HasSession ? Visibility.Visible : Visibility.Collapsed;
         ClipPanel.Visibility = tab == "clipboard" ? Visibility.Visible : Visibility.Collapsed;
         ControlsPanel.Visibility = tab == "controls" ? Visibility.Visible : Visibility.Collapsed;
+        QuickActionsPanel.Visibility = tab == "actions" ? Visibility.Visible : Visibility.Collapsed;
 
         switch (tab)
         {
@@ -806,6 +810,10 @@ public partial class MainWindow : Window
             case "controls":
                 _activeExpandedHeight = _settings.ExpandedHeight;
                 _ = RefreshControlsAsync();
+                break;
+            case "actions":
+                _activeExpandedHeight = _settings.ExpandedHeight;
+                RefreshShortcutSlots();
                 break;
             case "music":
                 _activeExpandedHeight = _settings.ExpandedHeight;
@@ -831,6 +839,258 @@ public partial class MainWindow : Window
     private void IconMusic_Click(object sender, RoutedEventArgs e)     => SetTab("music");
     private void IconClipboard_Click(object sender, RoutedEventArgs e) => SetTab("clipboard");
     private void IconControls_Click(object sender, RoutedEventArgs e)  => SetTab("controls");
+    private void IconActions_Click(object sender, RoutedEventArgs e)   => SetTab("actions");
+    // ---------- quick actions ----------
+
+    private const int ShortcutSlotCount = 6;
+
+    private readonly System.Collections.ObjectModel.ObservableCollection<ShortcutSlot> _shortcutSlots = new();
+    private readonly System.Collections.ObjectModel.ObservableCollection<ShortcutSlot> _pickerApps = new();
+    private int _pickerTargetSlot = -1;
+
+    /// <summary>Apps offered in the "+ Add" picker.</summary>
+    private static readonly (string Label, string Glyph, string Path)[] KnownApps =
+    {
+        ("File Explorer", "\U0001F4C1", "explorer.exe"),
+        ("Edge",          "\U0001F52C", "msedge.exe"),
+        ("Terminal",      "\U0001F5A5", "wt.exe"),
+        ("VS Code",       "\U0001F4BB", "code.cmd"),
+        ("Notepad",       "\U0001F4DD", "notepad.exe"),
+        ("Settings",      "⚙",         "ms-settings:"),
+        ("Calculator",    "\U0001F9EE", "calc.exe"),
+        ("Paint",         "\U0001F3A8", "mspaint.exe"),
+    };
+
+    private void RefreshShortcutSlots()
+    {
+        if (!ReferenceEquals(ShortcutSlotsHost.ItemsSource, _shortcutSlots))
+            ShortcutSlotsHost.ItemsSource = _shortcutSlots;
+
+        while (_shortcutSlots.Count > ShortcutSlotCount)
+            _shortcutSlots.RemoveAt(_shortcutSlots.Count - 1);
+
+        for (int i = 0; i < ShortcutSlotCount; i++)
+        {
+            string? path = i < _settings.QuickShortcuts.Count ? _settings.QuickShortcuts[i] : null;
+            string label = path is null ? "Add" : ShortName(path);
+            string glyph = path is null ? "＋" : AppGlyph(path);
+
+            if (i < _shortcutSlots.Count)
+            {
+                var slot = _shortcutSlots[i];
+                if (!string.Equals(slot.Path, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Replace the item so ObservableCollection fires CollectionChanged
+                    // (simple property mutation is not noticed by ItemsControl without full INPC wiring)
+                    _shortcutSlots[i] = new ShortcutSlot(path, label, glyph);
+                }
+            }
+            else
+            {
+                _shortcutSlots.Add(new ShortcutSlot(path, label, glyph));
+            }
+        }
+    }
+
+    private void RefreshPickerApps()
+    {
+        _pickerApps.Clear();
+        foreach (var (label, glyph, path) in KnownApps)
+            _pickerApps.Add(new ShortcutSlot(path, label, glyph));
+        if (!ReferenceEquals(PickerAppsHost.ItemsSource, _pickerApps))
+            PickerAppsHost.ItemsSource = _pickerApps;
+    }
+
+    private static string ShortName(string path)
+    {
+        try
+        {
+            if (path.EndsWith(":", StringComparison.Ordinal))
+                return path.TrimEnd(':');
+            string name = Path.GetFileNameWithoutExtension(path);
+            return string.IsNullOrWhiteSpace(name) ? path : name;
+        }
+        catch
+        {
+            return path;
+        }
+    }
+
+    private static string AppGlyph(string path)
+    {
+        string n = path.ToLowerInvariant();
+        if (n.Contains("explorer")) return "\U0001F4C1";
+        if (n.Contains("edge")) return "\U0001F52C";
+        if (n.Contains("terminal") || n.Contains("wt.exe")) return "\U0001F5A5";
+        if (n.Contains("code")) return "\U0001F4BB";
+        if (n.Contains("notepad")) return "\U0001F4DD";
+        if (n.Contains("calc")) return "\U0001F9EE";
+        if (n.Contains("paint")) return "\U0001F3A8";
+        if (n.Contains("settings")) return "⚙";
+        return "\U0001F5A5";
+    }
+
+    // ---------- quick action buttons ----------
+
+    private void ActionScreenshot_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        // Let DWM composite the hide before BitBlt reads the screen
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+        {
+            string? path = null;
+            try { path = ScreenCaptureService.CaptureFullScreen(); }
+            finally { Show(); }
+            FlashActionsStatus(path is null ? "Screenshot failed" : "Saved to Pictures\\Screenshots");
+        }));
+    }
+
+    private void ActionSnip_Click(object sender, RoutedEventArgs e)
+    {
+        Hide();
+        // Let DWM composite the hide before showing the snip overlay
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+        {
+            var snip = new SnipWindow();
+            snip.RegionCaptured += (x, y, w, h) =>
+            {
+                string? path = null;
+                try { path = ScreenCaptureService.CaptureRegion(x, y, w, h); }
+                finally { Dispatcher.BeginInvoke(new Action(Show)); }
+                Dispatcher.BeginInvoke(new Action(() =>
+                    FlashActionsStatus(path is null ? "Snip failed" : "Snipped to Pictures\\Screenshots")));
+            };
+            snip.Closed += (_, _) => Dispatcher.BeginInvoke(new Action(Show));
+            snip.Show();
+        }));
+    }
+
+    private void ActionRecord_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-screenclip:") { UseShellExecute = true });
+            FlashActionsStatus("Snipping Tool opened — pick Record");
+        }
+        catch
+        {
+            FlashActionsStatus("Could not open the Snipping Tool");
+        }
+    }
+
+    // ---------- shortcut slots ----------
+
+    private void ShortcutSlot_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ShortcutSlot slot })
+            return;
+
+        int index = _shortcutSlots.IndexOf(slot);
+        if (index < 0)
+            return;
+
+        if (slot.IsEmpty)
+        {
+            _pickerTargetSlot = index;
+            RefreshPickerApps();
+            ShortcutPicker.Visibility = Visibility.Visible;
+            return;
+        }
+
+        LaunchPath(slot.Path!);
+        FlashActionsStatus($"Opened {slot.Label}");
+    }
+
+    private void ShortcutRemove_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ShortcutSlot slot })
+            return;
+        int index = _shortcutSlots.IndexOf(slot);
+        if (index < 0)
+            return;
+
+        slot.Path = null;
+        slot.Refresh("Add", "＋");
+        while (_settings.QuickShortcuts.Count <= index)
+            _settings.QuickShortcuts.Add("");
+        _settings.QuickShortcuts[index] = "";
+        _settings.QuickShortcuts.RemoveAll(string.IsNullOrWhiteSpace);
+        _settings.Save();
+        RefreshShortcutSlots();
+    }
+
+    private void PickerApp_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ShortcutSlot app })
+            return;
+        AssignShortcut(app.Path!);
+    }
+
+    private void PickerBrowse_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Pick an app for this slot",
+            Filter = "Applications (*.exe;*.cmd;*.bat)|*.exe;*.cmd;*.bat|All files (*.*)|*.*",
+            CheckFileExists = true,
+        };
+        if (dlg.ShowDialog() == true)
+            AssignShortcut(dlg.FileName);
+    }
+
+    private void PickerCancel_Click(object sender, RoutedEventArgs e)
+    {
+        _pickerTargetSlot = -1;
+        ShortcutPicker.Visibility = Visibility.Collapsed;
+    }
+
+    private void AssignShortcut(string path)
+    {
+        if (_pickerTargetSlot < 0)
+            return;
+
+        while (_settings.QuickShortcuts.Count <= _pickerTargetSlot)
+            _settings.QuickShortcuts.Add("");
+        _settings.QuickShortcuts[_pickerTargetSlot] = path;
+        _settings.Save();
+
+        _pickerTargetSlot = -1;
+        ShortcutPicker.Visibility = Visibility.Collapsed;
+        RefreshShortcutSlots();
+        FlashActionsStatus($"Added {ShortName(path)}");
+    }
+
+    private static void LaunchPath(string path)
+    {
+        try
+        {
+            System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch
+        {
+            // app may have moved or not be installed
+        }
+    }
+
+    private void FlashActionsStatus(string text)
+    {
+        if (ActionsStatus is null)
+            return;
+        ActionsStatus.Text = text;
+        ActionsStatus.Opacity = 1;
+        _actionsStatusTimer?.Stop();
+        _actionsStatusTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _actionsStatusTimer.Tick += (_, _) =>
+        {
+            ActionsStatus.Opacity = 0;
+            _actionsStatusTimer.Stop();
+        };
+        _actionsStatusTimer.Start();
+    }
+
+    private DispatcherTimer? _actionsStatusTimer;
+
     private void IconSettings_Click(object sender, RoutedEventArgs e)
     {
         var win = new SettingsWindow(_settings) { Owner = this };
