@@ -154,7 +154,7 @@ public partial class MainWindow : Window
         // keep the content clip in sync with the collapsed footprint
         _morphW = ComputeCollapsedWidth();
         _morphH = ComputeCollapsedHeight();
-        ApplyMorphVisual(1.0, 1.0);
+        ApplyMorphVisual(1.0, 1.0, 0.0);
 
         // ensure window follows the mode's defaults when collapsed
         if (!_expanded)
@@ -404,7 +404,7 @@ public partial class MainWindow : Window
 
     private bool _morphRunning;
     private bool _morphExpanding;
-    private MorphSpring _morphSx, _morphSy;
+    private MorphSpring _morphSx, _morphSy, _morphP;
     private DateTime _lastMorphFrameUtc;
     private double _morphW, _morphH;   // window size the morph is working in (clip space)
 
@@ -445,15 +445,16 @@ public partial class MainWindow : Window
         // intermediate frame (wide + short + unrounded slab) — the "weird moment".
         _morphW = toW;
         _morphH = toH;
-        ApplyMorphVisual(fromW / toW, fromH / toH);
+        ApplyMorphVisual(fromW / toW, fromH / toH, 0.0);
         ResizeWindowAtomically(newLeft, Top, toW, toH);
+        UpdateLayout(); // flush the new bounds before the frame is painted
 
         PillView.Visibility = Visibility.Visible;
         PillView.Opacity = 1;
         ExpandedView.Visibility = Visibility.Visible;
         ExpandedView.Opacity = 0;
 
-        BeginMorph(expanding: true, fromW / toW, fromH / toH, 1.0, 1.0);
+        BeginMorph(expanding: true, fromW / toW, fromH / toH, 1.0, 1.0, 0.0, 1.0);
 
         AnimateOpacity(ExpandedView, 1, 180);
         AnimateOpacity(PillView, 0, 90, () => PillView.Visibility = Visibility.Collapsed);
@@ -475,13 +476,13 @@ public partial class MainWindow : Window
         _morphW = fromW;
         _morphH = fromH;
 
-        BeginMorph(expanding: false, 1.0, 1.0, toW / fromW, toH / fromH);
+        BeginMorph(expanding: false, 1.0, 1.0, toW / fromW, toH / fromH, 1.0, 0.0);
 
         AnimateOpacity(ExpandedView, 0, 120, () => ExpandedView.Visibility = Visibility.Collapsed);
         AnimateOpacity(PillView, 1, 140);
     }
 
-    private void BeginMorph(bool expanding, double sx0, double sy0, double sxT, double syT)
+    private void BeginMorph(bool expanding, double sx0, double sy0, double sxT, double syT, double p0, double p1)
     {
         if (_morphRunning)
             CompositionTarget.Rendering -= MorphRendering;
@@ -489,7 +490,8 @@ public partial class MainWindow : Window
         _morphExpanding = expanding;
         _morphSx = new MorphSpring(sx0, sxT);
         _morphSy = new MorphSpring(sy0, syT);
-        ApplyMorphVisual(sx0, sy0);
+        _morphP = new MorphSpring(p0, p1);
+        ApplyMorphVisual(sx0, sy0, p0);
         _lastMorphFrameUtc = DateTime.UtcNow;
         _morphRunning = true;
         CompositionTarget.Rendering += MorphRendering;
@@ -503,9 +505,9 @@ public partial class MainWindow : Window
         if (dt <= 0 || dt > 0.05)
             dt = 1.0 / 60.0; // clamped — every frame gets a sane step
 
-        ApplyMorphVisual(_morphSx.Update(dt), _morphSy.Update(dt));
+        ApplyMorphVisual(_morphSx.Update(dt), _morphSy.Update(dt), _morphP.Update(dt));
 
-        if (_morphSx.Settled && _morphSy.Settled)
+        if (_morphSx.Settled && _morphSy.Settled && _morphP.Settled)
             CompleteMorph();
     }
 
@@ -513,8 +515,13 @@ public partial class MainWindow : Window
     /// Drives both halves of the morph: the glass body's own width/height are animated (so the
     /// drop shadow and the inner glow follow the shape instead of being squashed into a smear),
     /// while the content stays pixel-crisp and is revealed through a matching rounded-rect clip.
+    /// <para>
+    /// The corner radius follows the shape: a capsule while the body is short, easing to the
+    /// resting radius as it opens. With a fixed radius the body read as a square-cornered bar
+    /// in the middle of the morph.
+    /// </para>
     /// </summary>
-    private void ApplyMorphVisual(double sx, double sy)
+    private void ApplyMorphVisual(double sx, double sy, double progress)
     {
         // use the morph's target window size, not the live layout size — right after a resize
         // the layout hasn't caught up yet, and a stale size clips the content away for a frame
@@ -525,20 +532,35 @@ public partial class MainWindow : Window
         double gw = w * sx, gh = h * sy;
         IslandGlass.Width = gw;
         IslandGlass.Height = gh;
+        // explicit position — the body must not depend on the layout re-centring it after a resize
+        IslandGlass.Margin = new Thickness((w - gw) / 2, 0, 0, 0);
+
+        double rest = IslandRestRadius;
+        double t = Math.Clamp(progress, 0.0, 1.0);
+        double radius = rest > 0
+            ? (gh / 2) + (rest - gh / 2) * t          // capsule -> resting radius
+            : 0;
+        radius = Math.Min(radius, gh / 2);
+
+        if (IslandRestRadius > 0)
+            IslandGlass.CornerRadius = new CornerRadius(radius);
+        else
+            IslandGlass.CornerRadius = new CornerRadius(0, 0, Math.Min(18, gh / 2), Math.Min(18, gh / 2));
 
         IslandContentClip.Rect = new Rect((w - gw) / 2, 0, gw, gh);
-        IslandContentClip.RadiusX = Math.Min(IslandCornerRadius, gh / 2);
-        IslandContentClip.RadiusY = Math.Min(IslandCornerRadius, gh / 2);
+        IslandContentClip.RadiusX = radius;
+        IslandContentClip.RadiusY = radius;
     }
 
-    private double IslandCornerRadius
+    /// <summary>The island's resting corner radius (0 when the classic flat-top notch is used).</summary>
+    private double IslandRestRadius
     {
         get
         {
             if (Resources["PillRadius"] is CornerRadius cr)
                 return cr.TopLeft == cr.TopRight && cr.TopRight == cr.BottomRight && cr.BottomRight == cr.BottomLeft
                     ? cr.TopLeft
-                    : 0; // classic notch has flat top corners — square clip
+                    : 0;
             return 0;
         }
     }
@@ -550,19 +572,20 @@ public partial class MainWindow : Window
 
         if (_morphExpanding)
         {
-            ApplyMorphVisual(1.0, 1.0);
+            ApplyMorphVisual(1.0, 1.0, 1.0);
         }
         else
         {
             // hand the window back to the pill footprint and reset for the next expand.
             // Visual first (the island already looks like the pill), then one atomic resize,
             // then reset so the body fills the small window exactly.
-            ApplyMorphVisual(_morphSx.Target, _morphSy.Target);
+            ApplyMorphVisual(_morphSx.Target, _morphSy.Target, _morphP.Target);
             double toW = ComputeCollapsedWidth(), toH = ComputeCollapsedHeight();
             ResizeWindowAtomically(CenteredLeft(toW), Top, toW, toH);
             _morphW = toW;
             _morphH = toH;
-            ApplyMorphVisual(1.0, 1.0);
+            ApplyMorphVisual(1.0, 1.0, 0.0);
+            UpdateLayout(); // flush the new bounds before the frame is painted
             ExpandedView.Visibility = Visibility.Collapsed;
             ExpandedView.Opacity = 0;
             PillView.Opacity = 1;

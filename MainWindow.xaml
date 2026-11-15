@@ -374,7 +374,7 @@
                 CornerRadius="{DynamicResource PillRadius}"
                 Background="#591E1D23"
                 ClipToBounds="True"
-                HorizontalAlignment="Center"
+                HorizontalAlignment="Left"
                 VerticalAlignment="Top">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="18" ShadowDepth="0" Direction="90" Color="#000000" Opacity="0.55"/>
