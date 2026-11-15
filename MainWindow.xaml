@@ -235,6 +235,65 @@
             </Style.Triggers>
         </Style>
 
+        <!-- quick action button (screenshot / snip / record) -->
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#1FFFFFFF"/>
+            <Setter Property="Foreground" Value="#F5F5F7"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,11"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2EFFFFFF"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#3DFFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- app shortcut slot -->
+        <Style x:Key="ShortcutSlot" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="64"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}" CornerRadius="12"/>
+                            <Rectangle Stroke="#33FFFFFF" StrokeThickness="1" RadiusX="12" RadiusY="12"
+                                       StrokeDashArray="3 2" Margin="0.5"/>
+                            <ContentPresenter Margin="4" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#14FFFFFF"/>
+                    <Setter Property="Foreground" Value="#F5F5F7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- segmented power-mode buttons -->
         <Style x:Key="IslandPowerModeButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
@@ -464,6 +523,15 @@
                                 <Rectangle Canvas.Left="11.8" Canvas.Top="1" Width="2" Height="14" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                 <Ellipse Canvas.Left="0"  Canvas.Top="2" Width="6.4" Height="6.4" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
                                 <Ellipse Canvas.Left="4.8" Canvas.Top="7" Width="6.4" Height="6.4" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            </Canvas>
+                        </Button>
+                        <Button x:Name="IconActions"  Click="IconActions_Click"  Tag="actions"
+                                Style="{StaticResource IslandIconButton}" ToolTip="Quick actions">
+                            <Canvas Width="16" Height="16">
+                                <Rectangle Canvas.Left="1" Canvas.Top="1" Width="6" Height="6" RadiusX="1.6" RadiusY="1.6" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Rectangle Canvas.Left="9" Canvas.Top="1" Width="6" Height="6" RadiusX="1.6" RadiusY="1.6" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Rectangle Canvas.Left="1" Canvas.Top="9" Width="6" Height="6" RadiusX="1.6" RadiusY="1.6" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                <Rectangle Canvas.Left="9" Canvas.Top="9" Width="6" Height="6" RadiusX="1.6" RadiusY="1.6" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
                             </Canvas>
                         </Button>
                     </StackPanel>
@@ -872,6 +940,106 @@
                             </Grid>
                         </Border>
                     </Grid>
+                </Grid>
+
+                <!-- Quick actions panel: screenshot / snip / record + app shortcuts -->
+                <Grid Grid.Row="2" x:Name="QuickActionsPanel" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- capture actions -->
+                    <UniformGrid Grid.Row="0" Columns="3" Rows="1" Margin="0,2,0,12">
+                        <Button x:Name="ActionScreenshot" Style="{StaticResource ActionButton}" Click="ActionScreenshot_Click"
+                                ToolTip="Capture the whole screen">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#x1F4F7;" FontFamily="Segoe UI Emoji" FontSize="14" Margin="0,0,7,0"/>
+                                <TextBlock Text="Screenshot" FontFamily="Segoe UI Semibold" FontSize="13" Foreground="#F5F5F7"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ActionSnip" Style="{StaticResource ActionButton}" Click="ActionSnip_Click"
+                                ToolTip="Capture a region of the screen">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="&#x2702;" FontSize="14" Margin="0,0,7,0"/>
+                                <TextBlock Text="Snip" FontFamily="Segoe UI Semibold" FontSize="13" Foreground="#F5F5F7"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ActionRecord" Style="{StaticResource ActionButton}" Click="ActionRecord_Click"
+                                Margin="0" ToolTip="Record the screen with the Snipping Tool">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Ellipse Width="9" Height="9" Fill="#FF453A" Margin="0,0,8,0"/>
+                                <TextBlock Text="Record" FontFamily="Segoe UI Semibold" FontSize="13" Foreground="#F5F5F7"/>
+                            </StackPanel>
+                        </Button>
+                    </UniformGrid>
+
+                    <!-- app shortcut slots -->
+                    <ItemsControl x:Name="ShortcutSlotsHost" Grid.Row="1">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="6" Rows="1"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ShortcutSlot}" Click="ShortcutSlot_Click"
+                                        CommandParameter="{Binding}" ToolTip="{Binding ToolTip}">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Glyph}" FontSize="16" FontFamily="Segoe UI Emoji"
+                                                   HorizontalAlignment="Center" Visibility="{Binding GlyphVisible}"/>
+                                        <TextBlock Text="{Binding Label}" FontFamily="Segoe UI Semibold" FontSize="10"
+                                                   Foreground="{Binding Foreground}" HorizontalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" MaxWidth="64" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- status line -->
+                    <TextBlock x:Name="ActionsStatus" Grid.Row="2" Text="" Foreground="#8AB4FF" FontSize="11"
+                               FontFamily="Segoe UI" Margin="2,10,0,0" TextTrimming="CharacterEllipsis"/>
+
+                    <!-- app picker (shown when an empty slot is clicked) -->
+                    <Border x:Name="ShortcutPicker" Visibility="Collapsed" Background="#A626272C"
+                            CornerRadius="14" BorderBrush="#14FFFFFF" BorderThickness="1" Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="Pick a shortcut" Foreground="#F5F5F7"
+                                       FontFamily="Segoe UI Semibold" FontSize="13" Margin="0,0,0,8"/>
+
+                            <ItemsControl Grid.Row="1" x:Name="PickerAppsHost">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource IslandFlatButton}" Click="PickerApp_Click"
+                                                CommandParameter="{Binding}" Margin="0,0,8,6" Padding="10,6">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Glyph}" FontSize="13" FontFamily="Segoe UI Emoji" Margin="0,0,6,0"/>
+                                                <TextBlock Text="{Binding Label}" Foreground="#F5F5F7" FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Style="{StaticResource IslandFlatButton}" Content="Browse…" Click="PickerBrowse_Click" Padding="10,6"/>
+                                <Button Style="{StaticResource IslandFlatButton}" Content="Cancel" Click="PickerCancel_Click" Padding="10,6" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Grid>
         </Grid>

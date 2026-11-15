@@ -20,6 +20,7 @@ public sealed class Settings
     public double ExpandedWidth { get; set; } = 480;
     public double ExpandedHeight { get; set; } = 270;
     public double IslandTopOffset { get; set; } = 10;
+    public List<string> QuickShortcuts { get; set; } = new();
     public int CollapseDelayMs { get; set; } = 250;
 
     public static string SettingsDir =>

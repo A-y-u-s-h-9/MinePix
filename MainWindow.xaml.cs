@@ -935,34 +935,41 @@ public partial class MainWindow : Window
     private void ActionScreenshot_Click(object sender, RoutedEventArgs e)
     {
         Hide();
-        // Let DWM composite the hide before BitBlt reads the screen
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+        // Wait two frames (≈150 ms) for DWM to finish compositing the hide
+        var t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+        t.Tick += (_, _) =>
         {
+            t.Stop();
             string? path = null;
             try { path = ScreenCaptureService.CaptureFullScreen(); }
+            catch (Exception ex) { ScreenCaptureService.LogPublic("Screenshot", ex); }
             finally { Show(); }
-            FlashActionsStatus(path is null ? "Screenshot failed" : "Saved to Pictures\\Screenshots");
-        }));
+            FlashActionsStatus(path is null ? "Screenshot failed — check Pictures\\Screenshots" : "Saved to Pictures\\Screenshots");
+        };
+        t.Start();
     }
 
     private void ActionSnip_Click(object sender, RoutedEventArgs e)
     {
         Hide();
-        // Let DWM composite the hide before showing the snip overlay
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+        var t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+        t.Tick += (_, _) =>
         {
+            t.Stop();
             var snip = new SnipWindow();
             snip.RegionCaptured += (x, y, w, h) =>
             {
                 string? path = null;
                 try { path = ScreenCaptureService.CaptureRegion(x, y, w, h); }
+                catch (Exception ex) { ScreenCaptureService.LogPublic("Snip", ex); }
                 finally { Dispatcher.BeginInvoke(new Action(Show)); }
                 Dispatcher.BeginInvoke(new Action(() =>
                     FlashActionsStatus(path is null ? "Snip failed" : "Snipped to Pictures\\Screenshots")));
             };
             snip.Closed += (_, _) => Dispatcher.BeginInvoke(new Action(Show));
             snip.Show();
-        }));
+        };
+        t.Start();
     }
 
     private void ActionRecord_Click(object sender, RoutedEventArgs e)
