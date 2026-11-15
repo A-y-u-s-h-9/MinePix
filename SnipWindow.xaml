@@ -18,8 +18,11 @@
         <!-- dim everything except the selected region -->
         <Path x:Name="DimPath" Fill="#99000000"/>
 
-        <!-- selection border -->
+        <!-- selection border. Must be Top/Left aligned: a Stretch-aligned Rectangle with an
+             explicit Width/Height is centred in its slot, so the border drifts away from the
+             region the user actually dragged (the capture rect itself was always correct). -->
         <Rectangle x:Name="SelectionBox" Stroke="#FFFFFF" StrokeThickness="1"
+                   HorizontalAlignment="Left" VerticalAlignment="Top"
                    Visibility="Collapsed" RadiusX="2" RadiusY="2"/>
 
         <!-- size readout -->
