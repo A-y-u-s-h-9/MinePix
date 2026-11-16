@@ -916,6 +916,34 @@ public partial class MainWindow : Window
             NotifyChip.Opacity = 1;
         }
     }
+    /// <summary>Click on a notification body: activate the source app, then remove the toast (mirrors tapping a toast).</summary>
+    private void NotifyOpen_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: NotificationItem item })
+            return;
+
+        var svc = NotificationService.Instance;
+        if (AppLauncher.TryActivate(item.Aumid, out var error))
+        {
+            _ = svc.DismissAsync(item.Id); // a toast disappears from the center once handled
+        }
+        else
+        {
+            svc.LogNote($"open failed for id={item.Id} app={item.AppName} aumid='{item.Aumid}': {error}");
+        }
+    }
+
+    /// <summary>Dismiss a single notification from the notification center.</summary>
+    private void NotifyDismiss_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: NotificationItem item })
+            _ = NotificationService.Instance.DismissAsync(item.Id);
+    }
+
+    /// <summary>Dismiss every notification the island can see.</summary>
+    private void NotifyDismissAll_Click(object sender, RoutedEventArgs e)
+        => _ = NotificationService.Instance.DismissAllAsync();
+
     // ---------- quick actions ----------
 
     private const int ShortcutSlotCount = 6;

@@ -10,6 +10,7 @@ namespace MinePix;
 public sealed class NotificationItem
 {
     public uint Id { get; init; }
+    public string Aumid { get; init; } = "";
     public string AppName { get; init; } = "";
     public string Text { get; init; } = "";
     public string MetaLine { get; init; } = "";
@@ -22,6 +23,7 @@ public sealed class NotificationItem
     public NotificationItem(UserNotification n)
     {
         Id = n.Id;
+        Aumid = n.AppInfo?.AppUserModelId?.Trim() ?? "";
         AppName = n.AppInfo?.DisplayInfo?.DisplayName?.Trim() ?? "Unknown app";
         TimeLine = n.CreationTime.ToString("HH:mm");
         MetaLine = $"{AppName} · {n.CreationTime.ToLocalTime():MMM d HH:mm}";
@@ -74,6 +76,9 @@ public sealed class NotificationService
     private bool _subscribed;
     private UserNotificationListener? _listener;
 
+    /// <summary>Dev/ops logging into the same notify.log the service uses.</summary>
+    public void LogNote(string message) => Log(message);
+
     private static void Log(string message)
     {
         try
@@ -120,9 +125,12 @@ public sealed class NotificationService
 
     public async Task ReloadAsync()
     {
+        var listener = _listener;
+        if (listener is null)
+            return;
         try
         {
-            var list = await _listener!.GetNotificationsAsync(NotificationKinds.Toast);
+            var list = await listener.GetNotificationsAsync(NotificationKinds.Toast);
             var items = list
                 .OrderByDescending(n => n.CreationTime)
                 .Take(20)
@@ -151,5 +159,48 @@ public sealed class NotificationService
         {
             Log("refresh failed: " + ex);
         }
+    }
+
+    /// <summary>Removes a single toast from the notification center.</summary>
+    public async Task DismissAsync(uint id)
+    {
+        var listener = _listener;
+        if (listener is null)
+            return;
+        try
+        {
+            listener.RemoveNotification(id);
+            Log($"removed notification id={id}");
+        }
+        catch (Exception ex)
+        {
+            Log($"remove id={id} failed: {ex.Message}");
+        }
+        await ReloadAsync();
+    }
+
+    /// <summary>Removes every toast we can currently see from the notification center.</summary>
+    public async Task DismissAllAsync()
+    {
+        var listener = _listener;
+        if (listener is null)
+            return;
+        // snapshot the current ids so removals don't mutate the enumeration
+        var ids = Items.Select(i => i.Id).ToList();
+        int removed = 0;
+        foreach (var id in ids)
+        {
+            try
+            {
+                listener.RemoveNotification(id);
+                removed++;
+            }
+            catch (Exception ex)
+            {
+                Log($"remove id={id} failed: {ex.Message}");
+            }
+        }
+        Log($"dismissed {removed}/{ids.Count} toast(s)");
+        await ReloadAsync();
     }
 }
