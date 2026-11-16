@@ -12,6 +12,8 @@ if (-not $env:NUGET_PACKAGES) {
 }
 if ($env:MIXSDK_TOOLS) { $tools = $env:MIXSDK_TOOLS }
 
+$elevated = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
 Write-Output 'Looking for (or creating) a matching self-signed developer certificate in CurrentUser\My...'
 $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -eq 'CN=MinePix Dev' } | Sort-Object NotAfter -Descending | Select-Object -First 1
 if (-not $cert) {
@@ -28,10 +30,19 @@ if (-not $cert) {
 Write-Output 'Signing MSIX...'
 & "$tools\signtool.exe" sign /fd SHA256 /a /v $msix
 
-Write-Output 'Trusting certificate in CurrentUser\TrustedPeople...'
+Write-Output 'Trusting certificate...'
 $cer = "$pkg\minepix-dev.cer"
 Export-Certificate -Cert $cert -FilePath $cer -Force | Out-Null
 Import-Certificate -FilePath $cer -CertStoreLocation Cert:\CurrentUser\TrustedPeople | Out-Null
+
+if ($elevated) {
+    Import-Certificate -FilePath $cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+    Write-Output 'Trusted in LocalMachine\TrustedPeople (elevated).'
+} else {
+    Write-Output 'WARNING: not elevated - skipping LocalMachine\TrustedPeople trust.'
+    Write-Output '         MSIX will refuse to install until the cert is trusted machine-wide.'
+    Write-Output '         Re-run this script from an elevated PowerShell.'
+}
 
 Write-Output 'Installing package...'
 Add-AppxPackage -Path $msix -ForceUpdateFromAnyVersion -ErrorAction Stop
