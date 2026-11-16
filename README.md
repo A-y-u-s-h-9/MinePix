@@ -49,7 +49,7 @@ translucent tint, sheen and a soft glow, all true transparency composited by DWM
 - [x] M4 — Clipboard history (SQLite, pin/search, copy-back on click)
 - [x] M5 — Quick controls (iOS-style): two tall vertical sliders + Wi-Fi/BT captions
 - [x] M6 — Quick actions (ms-screenclip shortcuts, Focus mode soon chips)
-- [ ] M7 — Notifications peek (MSIX identity required)
+- [x] M7 - Notifications peek (bell tab + header attention chip, MSIX identity for live events)
 - [ ] M8 — Game strip (FPS / CPU / GPU / RAM over borderless games)
 - [ ] M9 — Optional taskbar replacement
 - [ ] M10 — Microsoft Store packaging

@@ -17,12 +17,13 @@ Set-Location D:\Programming\MinePix
 Then launch & verify (also from the elevated shell, or after install):
 
 ```powershell
-$env:MINEPIX_NOTIF_PROBE = '1'
-$env:MINEPIX_FORCE_EXPANDED = '1'
+$env:MINEPIX_FORCE_TAB = 'notifications'
 $pkg = (Get-AppxPackage MinePix.App).InstallLocation
 & "$pkg\MinePix.exe"
-Get-Content "$env:APPDATA\MinePix\notif.log"   # access=Allowed, event subscription present, existing count>0
+Get-Content "$env:APPDATA\MinePix\notify.log"   # access=Allowed, "subscribed to NotificationChanged", refreshed lines
 ```
+
+`NotificationService` logs to `%APPDATA%\MinePix\notify.log` on startup: access request, subscription result, and every refresh. Under the MSIX identity the live-event line must say `subscribed to NotificationChanged`; without it the service logs that live events are unavailable (0x80070490) but still serves the existing feed.
 
 Without elevation, `Add-AppxPackage` fails with `0x800B0109` ("The root certificate of the signature in the app package or bundle must be trusted").
 

@@ -534,8 +534,16 @@
                                 <Rectangle Canvas.Left="9" Canvas.Top="9" Width="6" Height="6" RadiusX="1.6" RadiusY="1.6" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
                             </Canvas>
                         </Button>
+                        <Button x:Name="IconNotifications" Content="&#x1F514;" FontSize="15"
+                                Style="{StaticResource IslandIconButton}" Click="IconNotifications_Click"
+                                Tag="notifications" ToolTip="Notifications"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button x:Name="NotifyChip" Content="" Visibility="Collapsed"
+                                Style="{StaticResource IslandFlatButton}"
+                                Foreground="#8AB4FF" FontFamily="Segoe UI Semibold" FontSize="12"
+                                Padding="8,2" Margin="0,0,6,0" VerticalAlignment="Center"
+                                Click="NotifyChip_Click" ToolTip="Unread notifications"/>
                         <TextBlock x:Name="BatteryHeaderChip" Text="" Foreground="#30D158"
                                    FontFamily="Segoe UI Semibold" FontSize="11"
                                    Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -941,6 +949,86 @@
                         </Border>
                     </Grid>
                 </Grid>
+
+                <!-- Notifications panel -->
+                <Border Grid.Row="2" x:Name="NotificationsPanel" Background="#A626272C" CornerRadius="14"
+                        BorderBrush="#14FFFFFF" BorderThickness="1"
+                        Padding="8" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- header row -->
+                        <Grid Grid.Row="0">
+                            <TextBlock Text="Notifications" Foreground="#F5F5F7"
+                                       FontFamily="Segoe UI Semibold" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NotifyCount" Text="" Foreground="#8E8E93" FontSize="11"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- items -->
+                        <ListBox Grid.Row="1" x:Name="NotifyList" Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 KeyboardNavigation.TabNavigation="Continue"
+                                 Margin="0,6,0,0">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,0,0,2"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#14FFFFFF"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="Transparent" Padding="8,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="34"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="#8AB4FF"
+                                                       FontSize="17" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Text}" Foreground="#F5F5F7" FontSize="12.5"
+                                                           FontFamily="Segoe UI Semibold" TextTrimming="CharacterEllipsis"
+                                                           MaxWidth="360"/>
+                                                <TextBlock Text="{Binding MetaLine}" Foreground="#8E8E93" FontSize="10"
+                                                           FontFamily="Segoe UI" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                                                           MaxWidth="360"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding TimeLine}" Foreground="#8E8E93"
+                                                       FontSize="10" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- empty state (shares row 1 with the list; the list collapses when empty) -->
+                        <TextBlock Grid.Row="1" x:Name="NotifyEmpty" Text="No notifications"
+                                   Foreground="#8E8E93" FontSize="12" FontFamily="Segoe UI"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                    </Grid>
+                </Border>
 
                 <!-- Quick actions panel: screenshot / snip / record + app shortcuts -->
                 <Grid Grid.Row="2" x:Name="QuickActionsPanel" Visibility="Collapsed">

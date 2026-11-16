@@ -12,7 +12,7 @@
   <Identity
     Name="MinePix.App"
     Publisher="CN=MinePix Dev"
-    Version="0.7.0.0" />
+    Version="0.7.1.0" />
 
   <Properties>
     <DisplayName>MinePix</DisplayName>

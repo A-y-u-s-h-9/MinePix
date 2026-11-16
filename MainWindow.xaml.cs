@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _clipStatusTimer;
     private TaskbarIcon? _tray;
     private bool _expanded;
+    private bool _forceExpanded;
     private bool _islandHidden;
     private bool _seeking;
     private bool _controlsActive;
@@ -52,6 +53,10 @@ public partial class MainWindow : Window
         Height = ComputeCollapsedHeight();
         Top = _settings.IslandTopOffset;
         Left = CenteredLeft(Width);
+
+        // notifications: the peek tab reads the notification center and keeps it live while the app runs
+        NotificationService.Instance.Changed += RefreshNotificationsUi;
+        _ = NotificationService.Instance.InitializeAsync(Dispatcher);
 
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
         _collapseTimer.Tick += (_, _) => { _collapseTimer.Stop(); Collapse(); };
@@ -111,84 +116,25 @@ public partial class MainWindow : Window
             Dispatcher.BeginInvoke(new Action(() => { var w = new SettingsWindow(_settings) { Owner = this }; w.Show(); }), DispatcherPriority.Loaded);
 
         // dev affordance: force the expanded card open (used for headless screenshots/tests)
-        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1")
+        // also holds the expansion against the hover-watchdog so it doesn't collapse mid-capture
+        _forceExpanded = Environment.GetEnvironmentVariable("MINEPIX_FORCE_EXPANDED") == "1";
+        if (_forceExpanded)
+        {
             Dispatcher.BeginInvoke(new Action(Expand), DispatcherPriority.Loaded);
+        }
 
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") is string forceTab &&
-            (forceTab == "clipboard" || forceTab == "controls" || forceTab == "actions"))
+            (forceTab == "clipboard" || forceTab == "controls" || forceTab == "actions"
+             || forceTab == "notifications" || forceTab == "music"))
+        {
+            _forceExpanded = true;
             Dispatcher.BeginInvoke(new Action(() => { Expand(); SetTab(forceTab); }), DispatcherPriority.Loaded);
+        }
 
         var forceSelector = Environment.GetEnvironmentVariable("MINEPIX_FORCE_SELECTOR");
         if (forceSelector == "wifi" || forceSelector == "bluetooth")
         {
             Dispatcher.BeginInvoke(new Action(() => { Expand(); ShowSelector(forceSelector == "wifi" ? SelectorMode.Wifi : SelectorMode.Bluetooth); }), DispatcherPriority.Loaded);
-        }
-
-        // dev affordance: probe whether the packaged/registered identity can read system notifications
-        if (Environment.GetEnvironmentVariable("MINEPIX_NOTIF_PROBE") == "1")
-            Dispatcher.BeginInvoke(new Action(() => _ = RunNotificationProbeAsync()));
-    }
-
-    private static void LogNotifProbe(string msg)
-    {
-        try
-        {
-            var dir = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MinePix");
-            System.IO.Directory.CreateDirectory(dir);
-            System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "notif.log"),
-                $"{DateTime.Now:o} {msg}{Environment.NewLine}");
-        }
-        catch { }
-    }
-
-    /// <summary>
-    /// Dev-only probe: requests UserNotificationListener access and logs what it can see.
-    /// Only works when the app runs with an MSIX package identity + userNotificationListener capability.
-    /// </summary>
-    private async Task RunNotificationProbeAsync()
-    {
-        try
-        {
-            var listener = Windows.UI.Notifications.Management.UserNotificationListener.Current;
-            var access = await listener.RequestAccessAsync();
-            LogNotifProbe($"access={access}");
-
-            var existing = await listener.GetNotificationsAsync(
-                Windows.UI.Notifications.NotificationKinds.Toast);
-            LogNotifProbe($"existing count={existing.Count}");
-            foreach (var n in existing)
-            {
-                try
-                {
-                    var appName = n.AppInfo?.DisplayInfo?.DisplayName ?? "?";
-                    var binding = n.Notification?.Visual?.GetBinding("ToastGeneric");
-                    var text = binding?.GetTextElements()?.FirstOrDefault()?.Text ?? "";
-                    LogNotifProbe($"  id={n.Id} app={appName} text={text}");
-                }
-                catch (Exception ex)
-                {
-                    LogNotifProbe($"  id={n.Id} read-error: {ex.Message}");
-                }
-            }
-
-            listener.NotificationChanged += (s, args) =>
-            {
-                try
-                {
-                    var typeName = args?.GetType().FullName ?? "?";
-                    var props = args is null
-                        ? ""
-                        : string.Join(";", args.GetType().GetProperties().Select(p => $"{p.Name}={p.GetValue(args)}"));
-                    Dispatcher.Invoke(() => LogNotifProbe($"event fired args={typeName} {{{props}}}"));
-                }
-                catch { }
-            };
-            LogNotifProbe("subscribed to NotificationChanged");
-        }
-        catch (Exception ex)
-        {
-            LogNotifProbe($"probe failed: {ex}");
         }
     }
 
@@ -362,7 +308,8 @@ public partial class MainWindow : Window
             }
 
             bool charging = snap.PluggedIn && snap.Percent < 100;
-            BatteryHeaderChip.Text = $"\U0001F50B {snap.Percent}% · {(charging ? "Charging" : "Idle")}";
+            // keep the readout tight — the header also hosts the notification chip now
+            BatteryHeaderChip.Text = charging ? $"\u26A1 {snap.Percent}%" : $"{snap.Percent}%";
             BatteryHeaderChip.Visibility = Visibility.Visible;
             BatteryHeaderChip.Foreground = Brush(
                 snap.Percent <= 20 && !charging ? "#FF453A" : charging ? "#30D158" : "#B8B8BD");
@@ -415,6 +362,12 @@ public partial class MainWindow : Window
 
     private void EvaluateHover()
     {
+        if (_forceExpanded) // MINEPIX_FORCE_EXPANDED=1: hold the card open for headless captures
+        {
+            _collapseTimer.Stop();
+            return;
+        }
+
         if (_seeking) // don't disturb the island while the user is dragging the seek bar
         {
             _collapseTimer.Stop();
@@ -861,12 +814,17 @@ public partial class MainWindow : Window
         IconClipboard.Style = tab == "clipboard" ? activeStyle : inactiveStyle;
         IconControls.Style = tab == "controls" ? activeStyle : inactiveStyle;
         IconActions.Style = tab == "actions" ? activeStyle : inactiveStyle;
+        IconNotifications.Style = tab == "notifications" ? activeStyle : inactiveStyle;
         IconSettings.Style = inactiveStyle; // settings is momentary (opens window)
 
         MusicCard.Visibility = tab == "music" && MusicService.Instance.HasSession ? Visibility.Visible : Visibility.Collapsed;
         ClipPanel.Visibility = tab == "clipboard" ? Visibility.Visible : Visibility.Collapsed;
         ControlsPanel.Visibility = tab == "controls" ? Visibility.Visible : Visibility.Collapsed;
         QuickActionsPanel.Visibility = tab == "actions" ? Visibility.Visible : Visibility.Collapsed;
+        NotificationsPanel.Visibility = tab == "notifications" ? Visibility.Visible : Visibility.Collapsed;
+
+        if (tab == "notifications")
+            RefreshNotificationsUi();
 
         switch (tab)
         {
@@ -907,6 +865,57 @@ public partial class MainWindow : Window
     private void IconClipboard_Click(object sender, RoutedEventArgs e) => SetTab("clipboard");
     private void IconControls_Click(object sender, RoutedEventArgs e)  => SetTab("controls");
     private void IconActions_Click(object sender, RoutedEventArgs e)   => SetTab("actions");
+    private void IconNotifications_Click(object sender, RoutedEventArgs e) => SetTab("notifications");
+    private void NotifyChip_Click(object sender, RoutedEventArgs e)    { if (!_expanded) Expand(); SetTab("notifications"); }
+
+    /// <summary>Re-binds the notifications tab: list, empty state, unread badge and header chip.</summary>
+    private Storyboard? _notifyPulse;
+
+    private void RefreshNotificationsUi()
+    {
+        try
+        {
+            var svc = NotificationService.Instance;
+            bool has = svc.Items.Count > 0;
+
+            NotifyList.ItemsSource = svc.Items;
+            NotifyList.Visibility = has ? Visibility.Visible : Visibility.Collapsed;
+            NotifyEmpty.Visibility = has ? Visibility.Collapsed : Visibility.Visible;
+            NotifyCount.Text = has ? $"{svc.Items.Count}" : "";
+
+            int unread = svc.UnreadCount;
+            NotifyChip.Content = unread.ToString();
+            NotifyChip.Visibility = unread > 0 ? Visibility.Visible : Visibility.Collapsed;
+            PulseNotifyChip(unread > 0);
+        }
+        catch { }
+    }
+
+    /// <summary>Gentle breathing pulse on the unread chip so attention-seeking doesn't flash.</summary>
+    private void PulseNotifyChip(bool on)
+    {
+        if (on)
+        {
+            if (_notifyPulse is not null)
+                return;
+            _notifyPulse = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
+            var anim = new DoubleAnimation(1.0, 0.4, new Duration(TimeSpan.FromMilliseconds(750)))
+            {
+                AutoReverse = true,
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+            };
+            Storyboard.SetTarget(anim, NotifyChip);
+            Storyboard.SetTargetProperty(anim, new PropertyPath(UIElement.OpacityProperty));
+            _notifyPulse.Children.Add(anim);
+            _notifyPulse.Begin();
+        }
+        else
+        {
+            _notifyPulse?.Stop();
+            _notifyPulse = null;
+            NotifyChip.Opacity = 1;
+        }
+    }
     // ---------- quick actions ----------
 
     private const int ShortcutSlotCount = 6;
