@@ -3,3 +3,7 @@ obj/
 *.user
 .vs/
 minepix.json
+packaging/staging/
+packaging/*.msix
+packaging/*.cer
+packaging/*.appxblockmap

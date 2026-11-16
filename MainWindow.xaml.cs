@@ -123,6 +123,73 @@ public partial class MainWindow : Window
         {
             Dispatcher.BeginInvoke(new Action(() => { Expand(); ShowSelector(forceSelector == "wifi" ? SelectorMode.Wifi : SelectorMode.Bluetooth); }), DispatcherPriority.Loaded);
         }
+
+        // dev affordance: probe whether the packaged/registered identity can read system notifications
+        if (Environment.GetEnvironmentVariable("MINEPIX_NOTIF_PROBE") == "1")
+            Dispatcher.BeginInvoke(new Action(() => _ = RunNotificationProbeAsync()));
+    }
+
+    private static void LogNotifProbe(string msg)
+    {
+        try
+        {
+            var dir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MinePix");
+            System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "notif.log"),
+                $"{DateTime.Now:o} {msg}{Environment.NewLine}");
+        }
+        catch { }
+    }
+
+    /// <summary>
+    /// Dev-only probe: requests UserNotificationListener access and logs what it can see.
+    /// Only works when the app runs with an MSIX package identity + userNotificationListener capability.
+    /// </summary>
+    private async Task RunNotificationProbeAsync()
+    {
+        try
+        {
+            var listener = Windows.UI.Notifications.Management.UserNotificationListener.Current;
+            var access = await listener.RequestAccessAsync();
+            LogNotifProbe($"access={access}");
+
+            var existing = await listener.GetNotificationsAsync(
+                Windows.UI.Notifications.NotificationKinds.Toast);
+            LogNotifProbe($"existing count={existing.Count}");
+            foreach (var n in existing)
+            {
+                try
+                {
+                    var appName = n.AppInfo?.DisplayInfo?.DisplayName ?? "?";
+                    var binding = n.Notification?.Visual?.GetBinding("ToastGeneric");
+                    var text = binding?.GetTextElements()?.FirstOrDefault()?.Text ?? "";
+                    LogNotifProbe($"  id={n.Id} app={appName} text={text}");
+                }
+                catch (Exception ex)
+                {
+                    LogNotifProbe($"  id={n.Id} read-error: {ex.Message}");
+                }
+            }
+
+            listener.NotificationChanged += (s, args) =>
+            {
+                try
+                {
+                    var typeName = args?.GetType().FullName ?? "?";
+                    var props = args is null
+                        ? ""
+                        : string.Join(";", args.GetType().GetProperties().Select(p => $"{p.Name}={p.GetValue(args)}"));
+                    Dispatcher.Invoke(() => LogNotifProbe($"event fired args={typeName} {{{props}}}"));
+                }
+                catch { }
+            };
+            LogNotifProbe("subscribed to NotificationChanged");
+        }
+        catch (Exception ex)
+        {
+            LogNotifProbe($"probe failed: {ex}");
+        }
     }
 
     private double _settingsCollapsedWidth;
