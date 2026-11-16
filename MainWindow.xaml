@@ -944,14 +944,11 @@
 
                 <!-- Quick actions panel: screenshot / snip / record + app shortcuts -->
                 <Grid Grid.Row="2" x:Name="QuickActionsPanel" Visibility="Collapsed">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                    <!-- vertically centred pair of rows with a deliberate gap between them -->
+                    <StackPanel VerticalAlignment="Center">
 
                     <!-- capture actions -->
-                    <UniformGrid Grid.Row="0" Columns="3" Rows="1" Margin="0,2,0,12">
+                    <UniformGrid Columns="3" Rows="1" Margin="0,2,0,18">
                         <Button x:Name="ActionScreenshot" Style="{StaticResource ActionButton}" Click="ActionScreenshot_Click"
                                 ToolTip="Capture the whole screen">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -976,7 +973,7 @@
                     </UniformGrid>
 
                     <!-- app shortcut slots -->
-                    <ItemsControl x:Name="ShortcutSlotsHost" Grid.Row="1">
+                    <ItemsControl x:Name="ShortcutSlotsHost">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <UniformGrid Columns="6" Rows="1"/>
@@ -999,8 +996,9 @@
                     </ItemsControl>
 
                     <!-- status line -->
-                    <TextBlock x:Name="ActionsStatus" Grid.Row="2" Text="" Foreground="#8AB4FF" FontSize="11"
-                               FontFamily="Segoe UI" Margin="2,10,0,0" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="ActionsStatus" Text="" Foreground="#8AB4FF" FontSize="11"
+                               FontFamily="Segoe UI" Margin="2,14,0,0" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
 
                     <!-- app picker (shown when an empty slot is clicked) -->
                     <Border x:Name="ShortcutPicker" Visibility="Collapsed" Background="#A626272C"
