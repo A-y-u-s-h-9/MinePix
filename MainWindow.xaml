@@ -1014,21 +1014,23 @@
                                         <Button Grid.Column="0" Style="{StaticResource IslandFlatButton}"
                                                 HorizontalContentAlignment="Stretch" Padding="8,6"
                                                 Click="NotifyOpen_Click" ToolTip="Open the source app">
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                                <TextBlock Text="{Binding Glyph}" Foreground="#8AB4FF"
-                                                           FontSize="17" VerticalAlignment="Center"
-                                                           Width="34" TextAlignment="Center"/>
-                                                <StackPanel VerticalAlignment="Center">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="34"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="#8AB4FF"
+                                                           FontSize="17" VerticalAlignment="Center" TextAlignment="Center"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Text}" Foreground="#F5F5F7" FontSize="12.5"
-                                                               FontFamily="Segoe UI Semibold" TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="300"/>
+                                                               FontFamily="Segoe UI Semibold" TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding MetaLine}" Foreground="#8E8E93" FontSize="10"
-                                                               FontFamily="Segoe UI" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
-                                                               MaxWidth="300"/>
+                                                               FontFamily="Segoe UI" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding TimeLine}" Foreground="#8E8E93"
+                                                <TextBlock Grid.Column="2" Text="{Binding TimeLine}" Foreground="#8E8E93"
                                                            FontSize="10" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                            </StackPanel>
+                                            </Grid>
                                         </Button>
 
                                         <!-- dismiss this one -->
