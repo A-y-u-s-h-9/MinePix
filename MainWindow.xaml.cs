@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private readonly Settings _settings;
     private readonly DispatcherTimer _collapseTimer;
     private readonly DispatcherTimer _hoverWatchdog;
+    private readonly DispatcherTimer _topmostKeeper;
     private readonly DispatcherTimer _clockTimer;
     private readonly DispatcherTimer _mediaTimer;
     private readonly DispatcherTimer _clipStatusTimer;
@@ -67,6 +68,13 @@ public partial class MainWindow : Window
         _hoverWatchdog = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
         _hoverWatchdog.Tick += (_, _) => EvaluateHover();
         _hoverWatchdog.Start();
+
+        // keep-alive: Win32 "topmost" only puts a window in the topmost BAND — anything shown
+        // later in that band (OSDs, overlays, toasts, its own first-launch ordering) lands above
+        // the island. Re-assert HWND_TOPMOST periodically; NOACTIVATE keeps focus untouched.
+        _topmostKeeper = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
+        _topmostKeeper.Tick += (_, _) => AssertTopmost();
+        _topmostKeeper.Start();
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) =>
@@ -668,8 +676,25 @@ public partial class MainWindow : Window
         return src?.CompositionTarget?.TransformToDevice.M11 ?? 1.0;
     }
 
+    /// <summary>Re-asserts HWND_TOPMOST so the island wins the band order over later-shown topmost windows.</summary>
+    private void AssertTopmost()
+    {
+        try
+        {
+            IntPtr hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            if (hwnd == IntPtr.Zero)
+                return;
+            SetWindowPos(hwnd, HwndTopmost, 0, 0, 0, 0, SwpNoSize | SwpNoMove | SwpNoActivate);
+        }
+        catch { }
+    }
+
+    private static readonly IntPtr HwndTopmost = new IntPtr(-1);
+
     private const uint SwpNoZOrder = 0x0004;
     private const uint SwpNoActivate = 0x0010;
+    private const uint SwpNoSize = 0x0001;
+    private const uint SwpNoMove = 0x0002;
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
