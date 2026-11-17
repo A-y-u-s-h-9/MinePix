@@ -43,15 +43,17 @@ public partial class SettingsWindow : Window
         _settings = settings;
         InitializeComponent();
 
-        // wheel scrolls the menu at ~half the default step instead of jumping rows
-        SettingsScroll.PreviewMouseWheel += SettingsScroll_PreviewMouseWheel;
+        // wheel scrolls the menus at ~half the default step instead of jumping rows
+        GeneralPage.PreviewMouseWheel += Page_PreviewMouseWheel;
+        GameStripPage.PreviewMouseWheel += Page_PreviewMouseWheel;
 
         // over the sliders the wheel should scroll the page, not fight the slider
         foreach (var s in new Slider[] { CollapsedWidthSlider, ExpandedHeightSlider, IslandTopOffsetSlider, CollapseDelaySlider })
-            s.PreviewMouseWheel += SettingsScroll_PreviewMouseWheel;
+            s.PreviewMouseWheel += Page_PreviewMouseWheel;
 
         SyncUiFromSettings();
         _loading = false;
+        ShowPage(Environment.GetEnvironmentVariable("MINEPIX_FORCE_SETTINGS_PAGE") != "gamestrip");
     }
 
     /// <summary>Reflects the current settings instance into every control.</summary>
@@ -78,6 +80,15 @@ public partial class SettingsWindow : Window
         CollapseDelaySlider.Value = _settings.CollapseDelayMs;
         CollapseDelayLabel.Text = $"{_settings.CollapseDelayMs} ms";
 
+        GameStripEnabledSwitch.IsChecked = _settings.GameStripEnabled;
+        GameShowFpsSwitch.IsChecked = _settings.GameShowFps;
+        GameShowCpuSwitch.IsChecked = _settings.GameShowCpu;
+        GameShowGpuSwitch.IsChecked = _settings.GameShowGpu;
+        GameShowVramSwitch.IsChecked = _settings.GameShowVram;
+        GameShowTempPowerSwitch.IsChecked = _settings.GameShowTempPower;
+        RefreshGameForcedList();
+        RefreshGameExcludedList();
+
         RefreshShortcutsManager();
     }
 
@@ -90,6 +101,26 @@ public partial class SettingsWindow : Window
 
         ShortcutsManager.ItemsSource = items;
         NoShortcutsHint.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void RefreshGameForcedList()
+    {
+        var items = _settings.GameProcessNames
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .ToList();
+
+        GameForcedList.ItemsSource = items;
+        GameForcedListEmpty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void RefreshGameExcludedList()
+    {
+        var items = _settings.GameExclusions
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .ToList();
+
+        GameExcludedList.ItemsSource = items;
+        GameExcludedListEmpty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void RemoveShortcut_Click(object sender, RoutedEventArgs e)
@@ -112,12 +143,121 @@ public partial class SettingsWindow : Window
         }
     }
 
-    /// <summary>Wheel scrolls the settings page at half WPF's default step.</summary>
-    private void SettingsScroll_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    private void GeneralPage_PreviewMouseWheel(object sender, MouseWheelEventArgs e) => Page_PreviewMouseWheel(sender, e);
+
+    /// <summary>Wheel scrolls the settings pages at half WPF's default step.</summary>
+    private void Page_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
         e.Handled = true;
-        if (SettingsScroll is ScrollViewer sv)
+        if (sender is ScrollViewer sv)
             sv.ScrollToVerticalOffset(sv.VerticalOffset - e.Delta * 0.2);
+    }
+
+    // ---------- pages ----------
+
+    private void NavGeneral_Click(object sender, RoutedEventArgs e) => ShowPage(general: true);
+    private void NavGameStrip_Click(object sender, RoutedEventArgs e) => ShowPage(general: false);
+
+    private void ShowPage(bool general)
+    {
+        GeneralPage.Visibility = general ? Visibility.Visible : Visibility.Collapsed;
+        GameStripPage.Visibility = general ? Visibility.Collapsed : Visibility.Visible;
+        NavGeneral.IsChecked = general;
+        NavGameStrip.IsChecked = !general;
+    }
+
+    // ---------- game strip ----------
+
+    private void GameStripEnabledSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.GameStripEnabled = GameStripEnabledSwitch.IsChecked == true;
+        Persist();
+    }
+
+    private void GameShowFpsSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.GameShowFps = GameShowFpsSwitch.IsChecked == true;
+        Persist();
+    }
+
+    private void GameShowCpuSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.GameShowCpu = GameShowCpuSwitch.IsChecked == true;
+        Persist();
+    }
+
+    private void GameShowGpuSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.GameShowGpu = GameShowGpuSwitch.IsChecked == true;
+        Persist();
+    }
+
+    private void GameShowVramSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.GameShowVram = GameShowVramSwitch.IsChecked == true;
+        Persist();
+    }
+
+    private void GameShowTempPowerSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.GameShowTempPower = GameShowTempPowerSwitch.IsChecked == true;
+        Persist();
+    }
+
+    private void GameForcedListAdd_Click(object sender, RoutedEventArgs e)
+    {
+        var t = GameForcedListInput.Text?.Trim();
+        if (!string.IsNullOrWhiteSpace(t) && !_settings.GameProcessNames.Contains(t, StringComparer.OrdinalIgnoreCase))
+        {
+            _settings.GameProcessNames.Add(t);
+            Persist();
+            RefreshGameForcedList();
+        }
+        GameForcedListInput.Clear();
+    }
+
+    private void GameForcedListInput_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+            GameForcedListAdd_Click(sender, e);
+    }
+
+    private void GameForcedChip_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn && btn.Content is string s)
+        {
+            _settings.GameProcessNames.RemoveAll(x => string.Equals(x, s, StringComparison.OrdinalIgnoreCase));
+            Persist();
+            RefreshGameForcedList();
+        }
+    }
+
+    private void GameExcludedListAdd_Click(object sender, RoutedEventArgs e)
+    {
+        var t = GameExcludedListInput.Text?.Trim();
+        if (!string.IsNullOrWhiteSpace(t) && !_settings.GameExclusions.Contains(t, StringComparer.OrdinalIgnoreCase))
+        {
+            _settings.GameExclusions.Add(t);
+            Persist();
+            RefreshGameExcludedList();
+        }
+        GameExcludedListInput.Clear();
+    }
+
+    private void GameExcludedListInput_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+            GameExcludedListAdd_Click(sender, e);
+    }
+
+    private void GameExcludedChip_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn && btn.Content is string s)
+        {
+            _settings.GameExclusions.RemoveAll(x => string.Equals(x, s, StringComparison.OrdinalIgnoreCase));
+            Persist();
+            RefreshGameExcludedList();
+        }
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -254,6 +394,14 @@ public partial class SettingsWindow : Window
         _settings.ExpandedHeight = d.ExpandedHeight;
         _settings.IslandTopOffset = d.IslandTopOffset;
         _settings.CollapseDelayMs = d.CollapseDelayMs;
+        _settings.GameStripEnabled = d.GameStripEnabled;
+        _settings.GameShowFps = d.GameShowFps;
+        _settings.GameShowCpu = d.GameShowCpu;
+        _settings.GameShowGpu = d.GameShowGpu;
+        _settings.GameShowVram = d.GameShowVram;
+        _settings.GameShowTempPower = d.GameShowTempPower;
+        _settings.GameProcessNames = new List<string>(d.GameProcessNames);
+        _settings.GameExclusions = new List<string>(d.GameExclusions);
 
         // keep the autostart registry entry consistent with the reset default
         SyncAutoStart(_settings.StartWithWindows);

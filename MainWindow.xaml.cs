@@ -59,6 +59,10 @@ public partial class MainWindow : Window
         NotificationService.Instance.Changed += RefreshNotificationsUi;
         _ = NotificationService.Instance.InitializeAsync(Dispatcher);
 
+        // game strip (M8): foreground-game watcher + per-process stats + live FPS
+        GameService.Instance.Changed += RefreshGameStripUi;
+        GameService.Instance.Initialize(_settings, Dispatcher);
+
         _collapseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs) };
         _collapseTimer.Tick += (_, _) => { _collapseTimer.Stop(); Collapse(); };
 
@@ -133,7 +137,7 @@ public partial class MainWindow : Window
 
         if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_TAB") is string forceTab &&
             (forceTab == "clipboard" || forceTab == "controls" || forceTab == "actions"
-             || forceTab == "notifications" || forceTab == "music"))
+             || forceTab == "notifications" || forceTab == "music" || forceTab == "game"))
         {
             _forceExpanded = true;
             Dispatcher.BeginInvoke(new Action(() => { Expand(); SetTab(forceTab); }), DispatcherPriority.Loaded);
@@ -143,6 +147,16 @@ public partial class MainWindow : Window
         if (forceSelector == "wifi" || forceSelector == "bluetooth")
         {
             Dispatcher.BeginInvoke(new Action(() => { Expand(); ShowSelector(forceSelector == "wifi" ? SelectorMode.Wifi : SelectorMode.Bluetooth); }), DispatcherPriority.Loaded);
+        }
+
+        // dev affordance: force the game strip (optional explicit PID for headless testing)
+        if (Environment.GetEnvironmentVariable("MINEPIX_FORCE_GAME") == "1")
+        {
+            int? forcePid = null;
+            if (int.TryParse(Environment.GetEnvironmentVariable("MINEPIX_FORCE_GAME_PID"), out int p) && p > 0)
+                forcePid = p;
+            _forceExpanded = true; // hold the capture open against the hover watchdog
+            Dispatcher.BeginInvoke(new Action(() => { GameService.Instance.ForceGameForTesting(forcePid); Expand(); SetTab("game"); }), DispatcherPriority.Loaded);
         }
     }
 
@@ -847,9 +861,12 @@ public partial class MainWindow : Window
         ControlsPanel.Visibility = tab == "controls" ? Visibility.Visible : Visibility.Collapsed;
         QuickActionsPanel.Visibility = tab == "actions" ? Visibility.Visible : Visibility.Collapsed;
         NotificationsPanel.Visibility = tab == "notifications" ? Visibility.Visible : Visibility.Collapsed;
+        GameStripPanel.Visibility = tab == "game" && GameService.Instance.GameModeActive ? Visibility.Visible : Visibility.Collapsed;
 
         if (tab == "notifications")
             RefreshNotificationsUi();
+        if (tab == "game")
+            RefreshGameStripUi();
 
         switch (tab)
         {
@@ -868,6 +885,10 @@ public partial class MainWindow : Window
             case "music":
                 _activeExpandedHeight = _settings.ExpandedHeight;
                 RefreshMusicUi();
+                break;
+            case "game":
+                _activeExpandedHeight = _settings.ExpandedHeight;
+                RefreshGameStripUi();
                 break;
             default:
                 _activeExpandedHeight = _settings.ExpandedHeight;
@@ -968,6 +989,130 @@ public partial class MainWindow : Window
     /// <summary>Dismiss every notification the island can see.</summary>
     private void NotifyDismissAll_Click(object sender, RoutedEventArgs e)
         => _ = NotificationService.Instance.DismissAllAsync();
+
+    /// <summary>
+    /// Game strip (M8): syncs the pill block, the expanded strip panel, quick-action chip
+    /// and the adapter caption. Fires from GameService on every sample tick (~2 Hz).
+    /// </summary>
+    private bool _lastGameActive;
+    private long _gamePillCycleTick;
+    private int _gamePillCycle;
+
+    private static readonly System.Windows.Media.Brush GameGreen = Brush("#30D158");
+    private static readonly System.Windows.Media.Brush GameAmber = Brush("#FF9F0A");
+    private static readonly System.Windows.Media.Brush GameRed   = Brush("#FF453A");
+    private static readonly System.Windows.Media.Brush GameGray  = Brush("#8E8E93");
+
+    private System.Windows.Media.Brush FpsBrush(double? fps) => fps switch
+    {
+        null => GameGray,
+        >= 60 => GameGreen,
+        >= 30 => GameAmber,
+        _ => GameRed,
+    };
+
+    private void RefreshGameStripUi()
+    {
+        try
+        {
+            var svc = GameService.Instance;
+            var settings = _settings;
+            bool enabled = settings.GameStripEnabled;
+            bool active = svc.GameModeActive && enabled;
+            bool rising = active && !_lastGameActive;
+            _lastGameActive = active;
+
+            GameModeChip.IsChecked = svc.GameModeOverride;
+            GameModeDot.Fill = svc.GameModeOverride ? Brush("#FF9F0A") : Brush("#3A3A3C");
+
+            // pill block
+            PillNormalBlock.Visibility = active ? Visibility.Collapsed : Visibility.Visible;
+            PillClock.Visibility = active ? Visibility.Collapsed : Visibility.Visible;
+            PillGameBlock.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
+            PillGameAdapter.Text = active ? svc.AdapterCaption : "";
+
+            if (active)
+            {
+                double? fps = settings.GameShowFps ? svc.Fps : null;
+                string fpsText = fps is double f ? f.ToString("0") : "--";
+                PillFps.Text = fpsText;
+                PillFps.Foreground = FpsBrush(fps);
+
+                // cycling secondary metric: CPU -> GPU -> TEMP (VRAM if no temp)
+                _gamePillCycleTick++;
+                if (_gamePillCycleTick % 6 == 0)
+                    _gamePillCycle = (_gamePillCycle + 1) % 3;
+                PillGameSecondary.Text = _gamePillCycle switch
+                {
+                    0 => $"CPU {svc.CpuPercent:0}%",
+                    1 => $"GPU {svc.Gpu3DPercent:0}%",
+                    _ => svc.GpuTempC is double t && svc.IsNvidiaAdapter
+                        ? $"TEMP {t:0}°C"
+                        : $"VRAM {svc.VramUsedMb:0}MB",
+                };
+
+                // strip panel (visible only when the game tab is active)
+                double? fpsF = fps;
+                GameFpsValue.Text = fpsText;
+                GameFpsValue.Foreground = FpsBrush(fpsF);
+                GameFpsHint.Visibility = fpsF is null ? Visibility.Visible : Visibility.Collapsed;
+                GameStripCaption.Text = svc.ProcessName + (svc.AdapterCaption.Length > 0 ? " — " + svc.AdapterCaption : "");
+
+                // visibility toggles per settings
+                GameRowCpu.Visibility = settings.GameShowCpu ? Visibility.Visible : Visibility.Collapsed;
+                GameRowGpu.Visibility = settings.GameShowGpu ? Visibility.Visible : Visibility.Collapsed;
+                GameRowVram.Visibility = settings.GameShowVram ? Visibility.Visible : Visibility.Collapsed;
+                GameRowTempPower.Visibility = settings.GameShowTempPower && svc.IsNvidiaAdapter ? Visibility.Visible : Visibility.Collapsed;
+
+                // bars + values
+                GameCpuValue.Text = $"{svc.CpuPercent:0}%";
+                SetBarWidth(GameCpuBar, svc.CpuPercent / 100.0);
+                GameGpuValue.Text = $"{svc.Gpu3DPercent:0}%";
+                SetBarWidth(GameGpuBar, svc.Gpu3DPercent / 100.0);
+                double used = svc.VramUsedMb;
+                double total = svc.AdapterVramTotalMb;
+                double frac = total > 0 ? Math.Clamp(used / total, 0, 1) : 0;
+                GameVramValue.Text = total > 0 ? $"{used / 1024.0:0.0} / {total / 1024.0:0.0} GB" : $"{used:0} MB";
+                SetBarWidth(GameVramBar, frac);
+                GameTempValue.Text = svc.GpuTempC is double tc ? $"{tc:0}°C" : "--°C";
+                GamePowerValue.Text = svc.GpuPowerW is double pw ? $"{pw:0} W" : "-- W";
+            }
+
+            if (rising && _expanded && enabled)
+                SetTab("game");
+        }
+        catch (Exception ex)
+        {
+#if DEBUG
+            LogGame("UI refresh blew up: " + ex);
+#endif
+        }
+    }
+
+    private static void SetBarWidth(Border bar, double fraction)
+    {
+        if (bar.Parent is Border track && track.ActualWidth > 0)
+            bar.Width = Math.Clamp(fraction, 0, 1) * track.ActualWidth;
+    }
+
+    private void LogGame(string message)
+    {
+        try
+        {
+            var dir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MinePix");
+            System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "game.log"),
+                $"{DateTime.Now:o} {message}{Environment.NewLine}");
+        }
+        catch { }
+    }
+
+    private void GameFps_Click(object sender, RoutedEventArgs e)
+        => GameService.Instance.RearmEtw();
+
+    private void GameModeChip_Click(object sender, RoutedEventArgs e)
+        => GameService.Instance.ToggleOverride();
 
     // ---------- quick actions ----------
 

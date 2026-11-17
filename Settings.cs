@@ -23,6 +23,29 @@ public sealed class Settings
     public List<string> QuickShortcuts { get; set; } = new();
     public int CollapseDelayMs { get; set; } = 250;
 
+    // ---------- M8: game strip ----------
+    public bool GameStripEnabled { get; set; } = true;
+    public bool GameShowFps { get; set; } = true;
+    public bool GameShowCpu { get; set; } = true;
+    public bool GameShowGpu { get; set; } = true;
+    public bool GameShowVram { get; set; } = true;
+    public bool GameShowTempPower { get; set; } = true;
+    /// <summary>Process names force-treated as games regardless of fullscreen (windowed games).</summary>
+    public List<string> GameProcessNames { get; set; } = new();
+    /// <summary>Process names never treated as games (fullscreen browsers/terminals/etc.). Seeded with sane defaults.</summary>
+    public List<string> GameExclusions { get; set; } = new()
+    {
+        "chrome.exe", "msedge.exe", "firefox.exe", "brave.exe", "opera.exe", "vivaldi.exe", "arc.exe",
+        "code.exe", "devenv.exe", "winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe", "onenote.exe",
+        "notepad.exe", "msteams.exe", "slack.exe", "zoom.exe", "vlc.exe",
+        "mpc-hc.exe", "mpc-hc64.exe", "mpv.exe", "spotify.exe",
+        "discord.exe", "telegram.exe", "signal.exe",
+        "explorer.exe", "shelltaskbar.exe", "shellexperiencehost.exe", "startmenuexperiencehost.exe",
+        "searchhost.exe", "textinputhost.exe", "applicationframehost.exe", "msedgewebview2.exe",
+        "windowsterminal.exe", "cmd.exe", "powershell.exe", "pwsh.exe",
+        "soffice.exe", "searchapplication.exe", "dwm.exe", "minepix.exe",
+    };
+
     public static string SettingsDir =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MinePix");
 

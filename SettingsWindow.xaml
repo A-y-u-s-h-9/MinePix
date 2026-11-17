@@ -1,438 +1,602 @@
-﻿<Window x:Class="MinePix.SettingsWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MinePix — Settings"
-        Width="580" Height="620"
-        WindowStartupLocation="CenterScreen"
-        WindowStyle="None"
-        ResizeMode="NoResize"
-        Background="#000000"
-        AllowsTransparency="False">
-    <Window.Resources>
-        <Style x:Key="SectionHeader" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#8E8E93"/>
-            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Margin" Value="0,16,0,8"/>
-        </Style>
-        <Style x:Key="SettingRow" TargetType="Border">
-            <Setter Property="Background" Value="#121218"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-            <Setter Property="BorderBrush" Value="#1E1E26"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-        <Style x:Key="SettingLabel" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#F5F5F7"/>
-            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="13"/>
-        </Style>
-        <Style x:Key="SettingHint" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#8E8E93"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Margin" Value="0,2,0,0"/>
-        </Style>
-
-        <!-- iOS-style pill switch -->
-        <Style x:Key="IslandSwitch" TargetType="ToggleButton">
-            <Setter Property="Background" Value="#181820"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="13" Width="44" Height="26" Padding="3">
-                            <Ellipse x:Name="Knob" Width="20" Height="20" Fill="#F5F5F7" HorizontalAlignment="Left"
-                                     VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Background" Value="#8AB4FF"/>
-                                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- dark slim scrollbar -->
-        <Style TargetType="ScrollBar">
-            <Setter Property="Width" Value="7"/>
-            <Setter Property="MinWidth" Value="7"/>
-            <Setter Property="Margin" Value="4,0,0,0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid x:Name="Root" Background="Transparent" Width="7">
-                            <Track x:Name="PART_Track" IsDirectionReversed="True">
-                                <Track.Thumb>
-                                    <Thumb x:Name="Thumb" Background="#3DFFFFFF">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="3.5"
-                                                        SnapsToDevicePixels="True"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="ScrollBar.LineDownCommand" Background="Transparent" BorderThickness="0"/>
-                                </Track.IncreaseRepeatButton>
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="ScrollBar.LineUpCommand" Background="Transparent" BorderThickness="0"/>
-                                </Track.DecreaseRepeatButton>
-                            </Track>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Thumb" Property="Background" Value="#5CFFFFFF"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- solid accent apply button -->
-        <Style x:Key="ApplyButton" TargetType="Button">
-            <Setter Property="Background" Value="#8AB4FF"/>
-            <Setter Property="Foreground" Value="#0D1B2A"/>
-            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="12,12"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#A5C7FF"/>
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="#6D9BF0"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- island flat button -->
-        <Style x:Key="FlatButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#8AB4FF"/>
-            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1A1A22"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- custom dark slider (iOS feel): 4px track, accent fill, white thumb -->
-        <Style x:Key="DarkSlider" TargetType="Slider">
-            <Setter Property="Minimum" Value="0"/>
-            <Setter Property="Maximum" Value="100"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Slider">
-                        <Grid Height="22" VerticalAlignment="Center">
-                            <Border Height="4" CornerRadius="2" Background="#1F1F26" VerticalAlignment="Center"/>
-                            <Track x:Name="PART_Track" Height="22" VerticalAlignment="Center">
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" Background="#8AB4FF" BorderThickness="0">
-                                        <RepeatButton.Template>
-                                            <ControlTemplate TargetType="RepeatButton">
-                                                <Border Background="{TemplateBinding Background}" Height="4" CornerRadius="2" VerticalAlignment="Center"/>
-                                            </ControlTemplate>
-                                        </RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.DecreaseRepeatButton>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False" Background="Transparent" BorderThickness="0">
-                                        <RepeatButton.Template>
-                                            <ControlTemplate TargetType="RepeatButton">
-                                                <Border Background="Transparent" Height="4" VerticalAlignment="Center"/>
-                                            </ControlTemplate>
-                                        </RepeatButton.Template>
-                                    </RepeatButton>
-                                </Track.IncreaseRepeatButton>
-                                <Track.Thumb>
-                                    <Thumb Width="18" Height="18">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Ellipse Fill="#F5F5F7" Stroke="#40000000" StrokeThickness="1"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="FlatButtonDanger" TargetType="Button" BasedOn="{StaticResource FlatButton}">
-            <Setter Property="Foreground" Value="#FF6E6E"/>
-        </Style>
-
-        <!-- segmented theme buttons -->
-        <Style x:Key="ThemeButton" TargetType="ToggleButton">
-            <Setter Property="Background" Value="#181820"/>
-            <Setter Property="Foreground" Value="#B8B8BD"/>
-            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="14,10"/>
-            <Setter Property="Margin" Value="0,0,6,0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="#8AB4FF"/>
-                    <Setter Property="Foreground" Value="#0D1B2A"/>
-                </Trigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#20202A"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-    </Window.Resources>
-
-    <!-- outer frame — opaque black -->
-    <Border CornerRadius="14" Background="#000000" BorderBrush="#1E1E26" BorderThickness="1" Padding="0">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <!-- title bar -->
-            <Border Grid.Row="0" Background="#101016" CornerRadius="14,14,0,0" Height="44" MouseDown="TitleBar_MouseDown">
-                <Grid>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#8AB4FF"/>
-                        <TextBlock Text="MinePix — Settings" Foreground="#F5F5F7" FontFamily="Segoe UI Semibold" FontSize="13" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <Button x:Name="CloseButton" Style="{StaticResource FlatButton}" Content="✕"
-                            HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"
-                            Padding="12,4" Foreground="#C8C9CD" Click="CloseButton_Click"/>
-                </Grid>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="MinePix.SettingsWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="MinePix — Settings" Width="660" Height="620" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize" Background="#000000" AllowsTransparency="False">
+  <Window.Resources>
+    <Style x:Key="SectionHeader" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="#8E8E93" />
+      <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Margin" Value="0,16,0,8" />
+    </Style>
+    <Style x:Key="SettingRow" TargetType="Border">
+      <Setter Property="Background" Value="#121218" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="12,10" />
+      <Setter Property="Margin" Value="0,0,0,6" />
+      <Setter Property="BorderBrush" Value="#1E1E26" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="SettingLabel" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="#F5F5F7" />
+      <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+    <Style x:Key="SettingHint" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="#8E8E93" />
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <!-- iOS-style pill switch -->
+    <Style x:Key="IslandSwitch" TargetType="ToggleButton">
+      <Setter Property="Background" Value="#181820" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border Background="{TemplateBinding Background}" CornerRadius="13" Width="44" Height="26" Padding="3">
+              <Ellipse x:Name="Knob" Width="20" Height="20" Fill="#F5F5F7" HorizontalAlignment="Left" VerticalAlignment="Center" />
             </Border>
-
-            <!-- scrollable content -->
-            <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                          Padding="16,4,16,16" PreviewMouseWheel="SettingsScroll_PreviewMouseWheel">
-                <StackPanel>
-                    <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeader}" Margin="0,12,0,8"/>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <StackPanel>
-                            <TextBlock Text="Theme" Style="{StaticResource SettingLabel}"/>
-                            <TextBlock Text="Graphite / Glass / Solid — how the island body looks" Style="{StaticResource SettingHint}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <ToggleButton x:Name="ThemeGraphite" Style="{StaticResource ThemeButton}" Content="Graphite" Click="ThemeGraphite_Click"/>
-                                <ToggleButton x:Name="ThemeGlass" Style="{StaticResource ThemeButton}" Content="Glass" Click="ThemeGlass_Click"/>
-                                <ToggleButton x:Name="ThemeBlack" Style="{StaticResource ThemeButton}" Content="Solid" Click="ThemeBlack_Click"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Dynamic island mode" Style="{StaticResource SettingLabel}"/>
-                                <TextBlock Text="iPhone-style pill that liquid-expands on hover. Off keeps the slimmer classic pill." Style="{StaticResource SettingHint}"/>
-                            </StackPanel>
-                            <ToggleButton x:Name="IslandModeSwitch" Style="{StaticResource IslandSwitch}"
-                                          Grid.Column="1" VerticalAlignment="Center" Click="IslandModeSwitch_Click"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Music in collapsed pill" Style="{StaticResource SettingLabel}"/>
-                                <TextBlock Text="Shows the music note glyph + track name in the pill when something is playing" Style="{StaticResource SettingHint}"/>
-                            </StackPanel>
-                            <ToggleButton x:Name="MusicInPillSwitch" Style="{StaticResource IslandSwitch}"
-                                          Grid.Column="1" VerticalAlignment="Center" Click="MusicInPillSwitch_Click"/>
-                        </Grid>
-                    </Border>
-
-                    <TextBlock Text="BEHAVIOUR" Style="{StaticResource SectionHeader}"/>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Start with Windows" Style="{StaticResource SettingLabel}"/>
-                                <TextBlock Text="MinePix runs in the tray at sign-in" Style="{StaticResource SettingHint}"/>
-                            </StackPanel>
-                            <ToggleButton x:Name="StartWithWindowsSwitch" Style="{StaticResource IslandSwitch}"
-                                          Grid.Column="1" VerticalAlignment="Center" Click="StartWithWindowsSwitch_Click"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Clipboard history" Style="{StaticResource SettingLabel}"/>
-                                <TextBlock Text="Watch your clipboard for history. Never leaves your PC." Style="{StaticResource SettingHint}"/>
-                            </StackPanel>
-                            <ToggleButton x:Name="ClipboardEnabledSwitch" Style="{StaticResource IslandSwitch}"
-                                          Grid.Column="1" VerticalAlignment="Center" Click="ClipboardEnabledSwitch_Click"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="Collapsed width" Style="{StaticResource SettingLabel}"/>
-                                <Slider x:Name="CollapsedWidthSlider" Style="{StaticResource DarkSlider}" Minimum="180" Maximum="360" TickPlacement="None"
-                                        Value="220" Margin="0,6,0,0" ValueChanged="CollapsedWidthSlider_ValueChanged"/>
-                                <TextBlock x:Name="CollapsedWidthLabel" Text="220 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Expanded height" Style="{StaticResource SettingLabel}"/>
-                                <Slider x:Name="ExpandedHeightSlider" Style="{StaticResource DarkSlider}" Minimum="160" Maximum="420" TickPlacement="None"
-                                        Value="270" Margin="0,6,0,0" ValueChanged="ExpandedHeightSlider_ValueChanged"/>
-                                <TextBlock x:Name="ExpandedHeightLabel" Text="270 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <StackPanel>
-                            <TextBlock Text="Island top offset" Style="{StaticResource SettingLabel}"/>
-                            <TextBlock Text="How far the island sits below the screen edge" Style="{StaticResource SettingHint}"/>
-                            <Slider x:Name="IslandTopOffsetSlider" Style="{StaticResource DarkSlider}" Minimum="0" Maximum="40" TickPlacement="None"
-                                    Value="10" Margin="0,6,0,0" ValueChanged="IslandTopOffsetSlider_ValueChanged"/>
-                            <TextBlock x:Name="IslandTopOffsetLabel" Text="10 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <StackPanel>
-                            <TextBlock Text="Collapse delay" Style="{StaticResource SettingLabel}"/>
-                            <TextBlock Text="How long to wait after the pointer leaves before collapsing the island" Style="{StaticResource SettingHint}"/>
-                            <Slider x:Name="CollapseDelaySlider" Style="{StaticResource DarkSlider}" Minimum="100" Maximum="1000" TickPlacement="None"
-                                    Value="250" Margin="0,6,0,0" ValueChanged="CollapseDelaySlider_ValueChanged"/>
-                            <TextBlock x:Name="CollapseDelayLabel" Text="250 ms" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </Border>
-
-                    <TextBlock Text="QUICK SHORTCUTS" Style="{StaticResource SectionHeader}"/>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <StackPanel>
-                            <TextBlock Text="App shortcuts" Style="{StaticResource SettingLabel}"/>
-                            <TextBlock Text="Manage the apps pinned to the Quick Actions panel" Style="{StaticResource SettingHint}"/>
-                            <ItemsControl x:Name="ShortcutsManager" Margin="0,8,0,0">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="#1A1A22" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding Glyph}" FontFamily="Segoe UI Emoji" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1" Text="{Binding Path}" Foreground="#F5F5F7" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                                <Button Grid.Column="2" Style="{StaticResource FlatButton}" Content="✕" Foreground="#FF6E6E" Padding="8,4"
-                                                        CommandParameter="{Binding}" Click="RemoveShortcut_Click"/>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <TextBlock x:Name="NoShortcutsHint" Text="No shortcuts yet — add them from the Quick Actions panel" 
-                                       Foreground="#6E6E73" FontSize="11" Margin="0,4,0,0" Visibility="Collapsed"/>
-                        </StackPanel>
-                    </Border>
-
-                    <TextBlock Text="ABOUT" Style="{StaticResource SectionHeader}"/>
-
-                    <Border Style="{StaticResource SettingRow}">
-                        <StackPanel>
-                            <TextBlock Text="MinePix — your top edge, doing things" Style="{StaticResource SettingLabel}"/>
-                            <TextBlock Text="A free, open-source Dynamic Island for Windows. Version 0.3.0" Style="{StaticResource SettingHint}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <Button Style="{StaticResource FlatButton}" Content="Open settings folder" Click="OpenSettingsFolder_Click"/>
-                                <Button Style="{StaticResource FlatButton}" Content="View on GitHub" Margin="8,0,0,0" Click="OpenGitHub_Click"/>
-                                <Button Style="{StaticResource FlatButton}" Content="Check for updates" Margin="8,0,0,0" Click="CheckUpdates_Click"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <TextBlock Text="APPLY" Style="{StaticResource SectionHeader}"/>
-
-                    <Border Style="{StaticResource SettingRow}" Margin="0,0,0,16">
-                        <StackPanel>
-                            <TextBlock Text="Restart MinePix to apply everything" Style="{StaticResource SettingLabel}"/>
-                            <TextBlock Text="All settings are already saved. Apply restarts the island with the new configuration." Style="{StaticResource SettingHint}"/>
-                            <Button x:Name="ApplyButton" Style="{StaticResource ApplyButton}" Content="Apply — restart MinePix"
-                                    HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="ApplyButton_Click"/>
-                            <Button x:Name="ResetDefaultsButton" Style="{StaticResource FlatButtonDanger}" Content="Reset to defaults"
-                                    Margin="0,4,0,0" Click="ResetDefaults_Click"/>
-                        </StackPanel>
-                    </Border>
-
-                </StackPanel>
-            </ScrollViewer>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Background" Value="#8AB4FF" />
+                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- left-nav button for the settings pages -->
+    <Style x:Key="NavButton" TargetType="ToggleButton">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#8E8E93" />
+      <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="14,10" />
+      <Setter Property="Margin" Value="0,0,0,6" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="10">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#14FFFFFF" />
+                <Setter Property="Foreground" Value="#F5F5F7" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="#1F8AB4FF" />
+                <Setter Property="Foreground" Value="#8AB4FF" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- small list-chip row used by the game-strip lists -->
+    <Style x:Key="ListChip" TargetType="Button">
+      <Setter Property="Background" Value="#1FFFFFFF" />
+      <Setter Property="Foreground" Value="#F5F5F7" />
+      <Setter Property="FontFamily" Value="Consolas" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Margin" Value="0,0,6,6" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="7" Padding="8,3">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{TemplateBinding Content}" VerticalAlignment="Center" />
+                <TextBlock Text="✕" Foreground="#8E8E93" FontSize="10" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Foreground" Value="#FF9F0A" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <!-- dark slim scrollbar -->
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="7" />
+      <Setter Property="MinWidth" Value="7" />
+      <Setter Property="Margin" Value="4,0,0,0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Grid x:Name="Root" Background="Transparent" Width="7">
+              <Track x:Name="PART_Track" IsDirectionReversed="True">
+                <Track.Thumb>
+                  <Thumb x:Name="Thumb" Background="#3DFFFFFF">
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="3.5" SnapsToDevicePixels="True" />
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.LineDownCommand" Background="Transparent" BorderThickness="0" />
+                </Track.IncreaseRepeatButton>
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.LineUpCommand" Background="Transparent" BorderThickness="0" />
+                </Track.DecreaseRepeatButton>
+              </Track>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Thumb" Property="Background" Value="#5CFFFFFF" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <!-- solid accent apply button -->
+    <Style x:Key="ApplyButton" TargetType="Button">
+      <Setter Property="Background" Value="#8AB4FF" />
+      <Setter Property="Foreground" Value="#0D1B2A" />
+      <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Padding" Value="12,12" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#A5C7FF" />
+        </Trigger>
+        <Trigger Property="IsPressed" Value="True">
+          <Setter Property="Background" Value="#6D9BF0" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <!-- island flat button -->
+    <Style x:Key="FlatButton" TargetType="Button">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#8AB4FF" />
+      <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="HorizontalAlignment" Value="Left" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#1A1A22" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <!-- custom dark slider (iOS feel): 4px track, accent fill, white thumb -->
+    <Style x:Key="DarkSlider" TargetType="Slider">
+      <Setter Property="Minimum" Value="0" />
+      <Setter Property="Maximum" Value="100" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Slider">
+            <Grid Height="22" VerticalAlignment="Center">
+              <Border Height="4" CornerRadius="2" Background="#1F1F26" VerticalAlignment="Center" />
+              <Track x:Name="PART_Track" Height="22" VerticalAlignment="Center">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" Background="#8AB4FF" BorderThickness="0">
+                    <RepeatButton.Template>
+                      <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="{TemplateBinding Background}" Height="4" CornerRadius="2" VerticalAlignment="Center" />
+                      </ControlTemplate>
+                    </RepeatButton.Template>
+                  </RepeatButton>
+                </Track.DecreaseRepeatButton>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="Slider.IncreaseLarge" Focusable="False" Background="Transparent" BorderThickness="0">
+                    <RepeatButton.Template>
+                      <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent" Height="4" VerticalAlignment="Center" />
+                      </ControlTemplate>
+                    </RepeatButton.Template>
+                  </RepeatButton>
+                </Track.IncreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb Width="18" Height="18">
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Ellipse Fill="#F5F5F7" Stroke="#40000000" StrokeThickness="1" />
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+              </Track>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="FlatButtonDanger" TargetType="Button" BasedOn="{StaticResource FlatButton}">
+      <Setter Property="Foreground" Value="#FF6E6E" />
+    </Style>
+    <!-- segmented theme buttons -->
+    <Style x:Key="ThemeButton" TargetType="ToggleButton">
+      <Setter Property="Background" Value="#181820" />
+      <Setter Property="Foreground" Value="#B8B8BD" />
+      <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Padding" Value="14,10" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsChecked" Value="True">
+          <Setter Property="Background" Value="#8AB4FF" />
+          <Setter Property="Foreground" Value="#0D1B2A" />
+        </Trigger>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#20202A" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+  </Window.Resources>
+  <!-- outer frame — opaque black -->
+  <Border CornerRadius="14" Background="#000000" BorderBrush="#1E1E26" BorderThickness="1" Padding="0">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+      <!-- title bar -->
+      <Border Grid.Row="0" Background="#101016" CornerRadius="14,14,0,0" Height="44" MouseDown="TitleBar_MouseDown">
+        <Grid>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+            <Border Width="10" Height="10" CornerRadius="5" Background="#8AB4FF" />
+            <TextBlock Text="MinePix — Settings" Foreground="#F5F5F7" FontFamily="Segoe UI Semibold" FontSize="13" Margin="10,0,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+          <Button x:Name="CloseButton" Style="{StaticResource FlatButton}" Content="✕" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0" Padding="12,4" Foreground="#C8C9CD" Click="CloseButton_Click" />
         </Grid>
-    </Border>
+      </Border>
+      <!-- content area: nav rail + pages -->
+      <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="124" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <!-- left rail -->
+        <StackPanel Grid.Column="0" Margin="14,16,0,14">
+          <TextBlock Text="PAGES" Foreground="#48484D" FontFamily="Segoe UI Semibold" FontSize="10" Margin="10,0,0,8" />
+          <ToggleButton x:Name="NavGeneral" Style="{StaticResource NavButton}" Content="General" IsChecked="True" Click="NavGeneral_Click" />
+          <ToggleButton x:Name="NavGameStrip" Style="{StaticResource NavButton}" Content="Game strip" Click="NavGameStrip_Click" />
+        </StackPanel>
+        <!-- scrollable content (General page) -->
+        <ScrollViewer x:Name="GeneralPage" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14,4,16,16" PreviewMouseWheel="GeneralPage_PreviewMouseWheel">
+          <StackPanel>
+            <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeader}" Margin="0,12,0,8" />
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="Theme" Style="{StaticResource SettingLabel}" />
+                <TextBlock Text="Graphite / Glass / Solid — how the island body looks" Style="{StaticResource SettingHint}" />
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                  <ToggleButton x:Name="ThemeGraphite" Style="{StaticResource ThemeButton}" Content="Graphite" Click="ThemeGraphite_Click" />
+                  <ToggleButton x:Name="ThemeGlass" Style="{StaticResource ThemeButton}" Content="Glass" Click="ThemeGlass_Click" />
+                  <ToggleButton x:Name="ThemeBlack" Style="{StaticResource ThemeButton}" Content="Solid" Click="ThemeBlack_Click" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="Dynamic island mode" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="iPhone-style pill that liquid-expands on hover. Off keeps the slimmer classic pill." Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="IslandModeSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="IslandModeSwitch_Click" />
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="Music in collapsed pill" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="Shows the music note glyph + track name in the pill when something is playing" Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="MusicInPillSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="MusicInPillSwitch_Click" />
+              </Grid>
+            </Border>
+            <TextBlock Text="BEHAVIOUR" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="Start with Windows" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="MinePix runs in the tray at sign-in" Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="StartWithWindowsSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="StartWithWindowsSwitch_Click" />
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="Clipboard history" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="Watch your clipboard for history. Never leaves your PC." Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="ClipboardEnabledSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="ClipboardEnabledSwitch_Click" />
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="Collapsed width" Style="{StaticResource SettingLabel}" />
+                  <Slider x:Name="CollapsedWidthSlider" Style="{StaticResource DarkSlider}" Minimum="180" Maximum="360" TickPlacement="None" Value="220" Margin="0,6,0,0" ValueChanged="CollapsedWidthSlider_ValueChanged" />
+                  <TextBlock x:Name="CollapsedWidthLabel" Text="220 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="Expanded height" Style="{StaticResource SettingLabel}" />
+                  <Slider x:Name="ExpandedHeightSlider" Style="{StaticResource DarkSlider}" Minimum="160" Maximum="420" TickPlacement="None" Value="270" Margin="0,6,0,0" ValueChanged="ExpandedHeightSlider_ValueChanged" />
+                  <TextBlock x:Name="ExpandedHeightLabel" Text="270 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0" />
+                </StackPanel>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="Island top offset" Style="{StaticResource SettingLabel}" />
+                <TextBlock Text="How far the island sits below the screen edge" Style="{StaticResource SettingHint}" />
+                <Slider x:Name="IslandTopOffsetSlider" Style="{StaticResource DarkSlider}" Minimum="0" Maximum="40" TickPlacement="None" Value="10" Margin="0,6,0,0" ValueChanged="IslandTopOffsetSlider_ValueChanged" />
+                <TextBlock x:Name="IslandTopOffsetLabel" Text="10 px" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="Collapse delay" Style="{StaticResource SettingLabel}" />
+                <TextBlock Text="How long to wait after the pointer leaves before collapsing the island" Style="{StaticResource SettingHint}" />
+                <Slider x:Name="CollapseDelaySlider" Style="{StaticResource DarkSlider}" Minimum="100" Maximum="1000" TickPlacement="None" Value="250" Margin="0,6,0,0" ValueChanged="CollapseDelaySlider_ValueChanged" />
+                <TextBlock x:Name="CollapseDelayLabel" Text="250 ms" Foreground="#8E8E93" FontSize="10" Margin="0,6,0,0" />
+              </StackPanel>
+            </Border>
+            <TextBlock Text="QUICK SHORTCUTS" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="App shortcuts" Style="{StaticResource SettingLabel}" />
+                <TextBlock Text="Manage the apps pinned to the Quick Actions panel" Style="{StaticResource SettingHint}" />
+                <ItemsControl x:Name="ShortcutsManager" Margin="0,8,0,0">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Background="#1A1A22" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                        <Grid>
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="{Binding Glyph}" FontFamily="Segoe UI Emoji" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="{Binding Path}" Foreground="#F5F5F7" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                          <Button Grid.Column="2" Style="{StaticResource FlatButton}" Content="?" Foreground="#FF6E6E" Padding="8,4" CommandParameter="{Binding}" Click="RemoveShortcut_Click" />
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="NoShortcutsHint" Text="No shortcuts yet — add them from the Quick Actions panel" Foreground="#6E6E73" FontSize="11" Margin="0,4,0,0" Visibility="Collapsed" />
+              </StackPanel>
+            </Border>
+            <TextBlock Text="ABOUT" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="MinePix — your top edge, doing things" Style="{StaticResource SettingLabel}" />
+                <TextBlock Text="A free, open-source Dynamic Island for Windows. Version 0.3.0" Style="{StaticResource SettingHint}" />
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                  <Button Style="{StaticResource FlatButton}" Content="Open settings folder" Click="OpenSettingsFolder_Click" />
+                  <Button Style="{StaticResource FlatButton}" Content="View on GitHub" Margin="8,0,0,0" Click="OpenGitHub_Click" />
+                  <Button Style="{StaticResource FlatButton}" Content="Check for updates" Margin="8,0,0,0" Click="CheckUpdates_Click" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <TextBlock Text="APPLY" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}" Margin="0,0,0,16">
+              <StackPanel>
+                <TextBlock Text="Restart MinePix to apply everything" Style="{StaticResource SettingLabel}" />
+                <TextBlock Text="All settings are already saved. Apply restarts the island with the new configuration." Style="{StaticResource SettingHint}" />
+                <Button x:Name="ApplyButton" Style="{StaticResource ApplyButton}" Content="Apply — restart MinePix" HorizontalAlignment="Stretch" Margin="0,10,0,0" Click="ApplyButton_Click" />
+                <Button x:Name="ResetDefaultsButton" Style="{StaticResource FlatButtonDanger}" Content="Reset to defaults" Margin="0,4,0,0" Click="ResetDefaults_Click" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+        <!-- scrollable content (Game strip page) -->
+        <ScrollViewer x:Name="GameStripPage" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14,4,16,16" Visibility="Collapsed" PreviewMouseWheel="GeneralPage_PreviewMouseWheel">
+          <StackPanel>
+            <TextBlock Text="GAME STRIP" Style="{StaticResource SectionHeader}" Margin="0,12,0,8" />
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="Enable game strip" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="When a fullscreen game takes the foreground, the island morphs into live stats (FPS, CPU, GPU, VRAM). Tabs remain available." Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="GameStripEnabledSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="GameStripEnabledSwitch_Click" />
+              </Grid>
+            </Border>
+            <TextBlock Text="SHOW" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="FPS (ETW)" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="Live frames-presented-per-second via ETW. Falls back to '--' if the trace can't start (tap to retry in the strip)." Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="GameShowFpsSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="GameShowFpsSwitch_Click" />
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="CPU (game process)" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="Per-process CPU utilization bar" Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="GameShowCpuSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="GameShowCpuSwitch_Click" />
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="GPU 3D (game process)" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="Per-process 3D-engine utilization, captioned with the active adapter" Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="GameShowGpuSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="GameShowGpuSwitch_Click" />
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="VRAM (game / total)" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="Game-process dedicated GPU memory against the adapter's total" Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="GameShowVramSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="GameShowVramSwitch_Click" />
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingRow}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                  <TextBlock Text="GPU temperature + power (NVIDIA)" Style="{StaticResource SettingLabel}" />
+                  <TextBlock Text="Shown only when the game renders on an NVIDIA adapter" Style="{StaticResource SettingHint}" />
+                </StackPanel>
+                <ToggleButton x:Name="GameShowTempPowerSwitch" Style="{StaticResource IslandSwitch}" Grid.Column="1" VerticalAlignment="Center" Click="GameShowTempPowerSwitch_Click" />
+              </Grid>
+            </Border>
+            <TextBlock Text="FORCE THESE PROCESSES AS GAMES" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="Exe names always counted as games (e.g. windowed games). Applies even if the window isn't fullscreen." Style="{StaticResource SettingHint}" />
+                <Grid Margin="0,8,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBox x:Name="GameForcedListInput" Grid.Column="0" Background="#1FFFFFFF" Foreground="#F5F5F7" CaretBrush="#8AB4FF" BorderThickness="0" Padding="8,4" FontFamily="Consolas" FontSize="12" Text="" VerticalAlignment="Center" KeyDown="GameForcedListInput_KeyDown" />
+                  <Button x:Name="GameForcedListAdd" Grid.Column="1" Style="{StaticResource FlatButton}" Content="Add" Margin="8,0,0,0" Padding="10,4" Click="GameForcedListAdd_Click" />
+                </Grid>
+                <ItemsControl x:Name="GameForcedList" Margin="0,8,0,0">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Style="{StaticResource ListChip}" Content="{Binding}" Click="GameForcedChip_Click" ToolTip="Remove" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="GameForcedListEmpty" Text="None — windowed games won't be treated as games" Style="{StaticResource SettingHint}" Margin="0,4,0,0" />
+              </StackPanel>
+            </Border>
+            <TextBlock Text="NEVER TREAT AS GAMES" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="These fullscreen apps never trigger the strip. Remove what you want monitored anyway." Style="{StaticResource SettingHint}" />
+                <Grid Margin="0,8,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBox x:Name="GameExcludedListInput" Grid.Column="0" Background="#1FFFFFFF" Foreground="#F5F5F7" CaretBrush="#8AB4FF" BorderThickness="0" Padding="8,4" FontFamily="Consolas" FontSize="12" Text="" VerticalAlignment="Center" KeyDown="GameExcludedListInput_KeyDown" />
+                  <Button x:Name="GameExcludedListAdd" Grid.Column="1" Style="{StaticResource FlatButton}" Content="Add" Margin="8,0,0,0" Padding="10,4" Click="GameExcludedListAdd_Click" />
+                </Grid>
+                <ItemsControl x:Name="GameExcludedList" Margin="0,8,0,0">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Style="{StaticResource ListChip}" Content="{Binding}" Click="GameExcludedChip_Click" ToolTip="Remove" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="GameExcludedListEmpty" Text="No exclusions — every fullscreen app counts as a game" Style="{StaticResource SettingHint}" Margin="0,4,0,0" Visibility="Collapsed" />
+              </StackPanel>
+            </Border>
+            <TextBlock Text="GAME MODE CHIP" Style="{StaticResource SectionHeader}" />
+            <Border Style="{StaticResource SettingRow}">
+              <StackPanel>
+                <TextBlock Text="Quick actions ? Game Mode" Style="{StaticResource SettingLabel}" />
+                <TextBlock Text="Force the current fullscreen app to count as a game for this session — overrides exclusions." Style="{StaticResource SettingHint}" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+    </Grid>
+  </Border>
 </Window>
-

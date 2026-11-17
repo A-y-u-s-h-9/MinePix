@@ -321,6 +321,38 @@
             </Style.Triggers>
         </Style>
 
+        <!-- toggle chip: game-mode override for the current fullscreen app (M8) -->
+        <Style x:Key="GameModeChip" TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#B8B8BD"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="46"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="12"
+                                BorderBrush="#26FFFFFF" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#14FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#26FF9F0A"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#66FF9F0A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- segmented power-mode buttons -->
         <Style x:Key="IslandPowerModeButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
@@ -494,7 +526,8 @@
 
             <!-- Collapsed pill -->
             <Grid x:Name="PillView" Width="220" Height="44" HorizontalAlignment="Center" VerticalAlignment="Top">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="16,0,0,0">
+                <!-- normal pill content -->
+                <StackPanel x:Name="PillNormalBlock" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="16,0,0,0">
                     <Ellipse x:Name="PillDot" Width="8" Height="8" Fill="#8AB4FF" VerticalAlignment="Center"/>
                     <TextBlock x:Name="PillNote" Text="&#x266A;" Foreground="#8AB4FF" FontSize="13"
                                VerticalAlignment="Center" Visibility="Collapsed"/>
@@ -515,6 +548,22 @@
                            HorizontalAlignment="Right"
                            Margin="0,0,16,0"
                            VerticalAlignment="Center"/>
+                <!-- game pill content (M8): FPS hero + cycling secondary metric -->
+                <StackPanel x:Name="PillGameBlock" Orientation="Horizontal"
+                            VerticalAlignment="Center" HorizontalAlignment="Left"
+                            Margin="14,0,0,0" Visibility="Collapsed">
+                    <TextBlock x:Name="PillFps" Text="--" Foreground="#30D158"
+                               FontFamily="Consolas" FontWeight="Bold" FontSize="22"
+                               VerticalAlignment="Center" MinWidth="46"/>
+                    <StackPanel VerticalAlignment="Center" Margin="6,0,0,0">
+                        <TextBlock Text="FPS" Foreground="#8E8E93" FontSize="9" FontFamily="Segoe UI Semibold"/>
+                        <TextBlock x:Name="PillGameSecondary" Text="CPU --%" Foreground="#B8B8BD"
+                                   FontFamily="Consolas" FontSize="11"/>
+                    </StackPanel>
+                    <TextBlock x:Name="PillGameAdapter" Text="" Foreground="#8E8E93"
+                               FontSize="10" VerticalAlignment="Center" Margin="10,0,0,0"
+                               MaxWidth="90" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
             </Grid>
 
             <!-- Expanded card -->
@@ -1080,6 +1129,100 @@
                     </Grid>
                 </Border>
 
+                <!-- Game strip panel (M8) -->
+                <Border Grid.Row="2" x:Name="GameStripPanel" Background="#A626272C" CornerRadius="14"
+                        BorderBrush="#14FFFFFF" BorderThickness="1" Padding="12" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- header -->
+                        <Grid Grid.Row="0">
+                            <TextBlock Text="GAME STRIP" Foreground="#8E8E93"
+                                       FontFamily="Segoe UI Semibold" FontSize="10" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="GameStripCaption" Text="" Foreground="#8E8E93"
+                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- FPS hero (tap to retry when ETW is unavailable) -->
+                        <Button Grid.Row="1" x:Name="GameFpsButton" Style="{StaticResource IslandFlatButton}"
+                                Click="GameFps_Click" ToolTip="Tapping re-arms the FPS ETW session"
+                                Margin="0,8,0,0" Padding="10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="GameFpsValue" Text="--" Foreground="#30D158"
+                                           FontFamily="Consolas" FontWeight="Bold" FontSize="42"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel VerticalAlignment="Center" Margin="14,0,0,0">
+                                    <TextBlock Text="FPS" Foreground="#8E8E93" FontSize="11" FontFamily="Segoe UI Semibold"/>
+                                    <TextBlock x:Name="GameFpsHint" Text="tap to retry" Foreground="#FF9F0A"
+                                               FontSize="9" Visibility="Collapsed"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- stat rows -->
+                        <StackPanel Grid.Row="2" Margin="0,10,0,0">
+                            <!-- CPU -->
+                            <Grid x:Name="GameRowCpu" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="52"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="46"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="CPU" Foreground="#8E8E93" FontSize="11" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Height="4" CornerRadius="2" Background="#1FFFFFFF" VerticalAlignment="Center">
+                                    <Border x:Name="GameCpuBar" Width="0" CornerRadius="2" Background="#8AB4FF" HorizontalAlignment="Left"/>
+                                </Border>
+                                <TextBlock Grid.Column="2" x:Name="GameCpuValue" Text="--%" Foreground="#F5F5F7" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                            <!-- GPU 3D -->
+                            <Grid x:Name="GameRowGpu" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="52"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="46"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="GPU 3D" Foreground="#8E8E93" FontSize="11" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Height="4" CornerRadius="2" Background="#1FFFFFFF" VerticalAlignment="Center">
+                                    <Border x:Name="GameGpuBar" Width="0" CornerRadius="2" Background="#30D158" HorizontalAlignment="Left"/>
+                                </Border>
+                                <TextBlock Grid.Column="2" x:Name="GameGpuValue" Text="--%" Foreground="#F5F5F7" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                            <!-- VRAM -->
+                            <Grid x:Name="GameRowVram" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="52"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="96"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="VRAM" Foreground="#8E8E93" FontSize="11" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Height="4" CornerRadius="2" Background="#1FFFFFFF" VerticalAlignment="Center">
+                                    <Border x:Name="GameVramBar" Width="0" CornerRadius="2" Background="#FF9F0A" HorizontalAlignment="Left"/>
+                                </Border>
+                                <TextBlock Grid.Column="2" x:Name="GameVramValue" Text="-- / --" Foreground="#F5F5F7" FontFamily="Consolas" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+                            <!-- TEMP + POWER (NVIDIA only) -->
+                            <Grid x:Name="GameRowTempPower" Margin="0,2,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <TextBlock Text="TEMP" Foreground="#8E8E93" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="GameTempValue" Text="--°C" Foreground="#FF453A" FontFamily="Consolas" FontWeight="Bold" FontSize="17" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="POWER" Foreground="#8E8E93" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="GamePowerValue" Text="-- W" Foreground="#FFD60A" FontFamily="Consolas" FontWeight="Bold" FontSize="17" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <!-- Quick actions panel: screenshot / snip / record + app shortcuts -->
                 <Grid Grid.Row="2" x:Name="QuickActionsPanel" Visibility="Collapsed">
                     <!-- vertically centred pair of rows with a deliberate gap between them -->
@@ -1136,6 +1279,18 @@
                     <!-- status line -->
                     <TextBlock x:Name="ActionsStatus" Text="" Foreground="#8AB4FF" FontSize="11"
                                FontFamily="Segoe UI" Margin="2,14,0,0" TextTrimming="CharacterEllipsis"/>
+
+                    <!-- game mode override chip (M8) -->
+                    <ToggleButton x:Name="GameModeChip" Style="{StaticResource GameModeChip}"
+                                  Click="GameModeChip_Click" Margin="0,12,0,0"
+                                  ToolTip="Count the current fullscreen app as a game, even if it's normally excluded">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="GameModeDot" Width="8" Height="8" Fill="#FF9F0A"
+                                     VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Game Mode" FontFamily="Segoe UI Semibold" FontSize="13" Foreground="#F5F5F7"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ToggleButton>
                     </StackPanel>
 
                     <!-- app picker (shown when an empty slot is clicked) -->
