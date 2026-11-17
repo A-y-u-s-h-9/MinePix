@@ -235,6 +235,33 @@
             </Style.Triggers>
         </Style>
 
+        <!-- flat header-ish button that hugs its content horizontally -->
+        <Style x:Key="IslandWideButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8E8E93"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#F5F5F7"/>
+                    <Setter Property="Background" Value="#14FFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- quick action button (screenshot / snip / record) -->
         <Style x:Key="ActionButton" TargetType="Button">
             <Setter Property="Background" Value="#1FFFFFFF"/>
@@ -980,12 +1007,14 @@
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  KeyboardNavigation.TabNavigation="Continue"
+                                 HorizontalContentAlignment="Stretch"
                                  Margin="0,6,0,0">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="Background" Value="Transparent"/>
                                     <Setter Property="Padding" Value="0"/>
                                     <Setter Property="Margin" Value="0,0,0,2"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="ListBoxItem">
@@ -1011,7 +1040,7 @@
                                         </Grid.ColumnDefinitions>
 
                                         <!-- click body: activate the source app (notification-center API has no per-toast payloads) -->
-                                        <Button Grid.Column="0" Style="{StaticResource IslandFlatButton}"
+                                        <Button Grid.Column="0" Style="{StaticResource IslandWideButton}"
                                                 HorizontalContentAlignment="Stretch" Padding="8,6"
                                                 Click="NotifyOpen_Click" ToolTip="Open the source app">
                                             <Grid>
