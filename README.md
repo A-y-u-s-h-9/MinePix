@@ -1,4 +1,4 @@
-# MinePix
+# MinePix — v1.0.0
 
 A free, open-source **Dynamic Island for Windows 10 & 11** — an island that hangs from the
 top-center of your screen, like a MacBook notch or the iPhone Dynamic Island.
@@ -49,10 +49,43 @@ translucent tint, sheen and a soft glow, all true transparency composited by DWM
 - [x] M4 — Clipboard history (SQLite, pin/search, copy-back on click)
 - [x] M5 — Quick controls (iOS-style): two tall vertical sliders + Wi-Fi/BT captions
 - [x] M6 — Quick actions (ms-screenclip shortcuts, Focus mode soon chips)
-- [x] M7 - Notifications peek (bell tab + header attention chip, MSIX identity for live events)
-- [x] M8 - Game strip (FPS / CPU / GPU / VRAM + temp / power over borderless games)
-- [ ] M9 — Optional taskbar replacement
-- [ ] M10 — Microsoft Store packaging
+- [x] M7 — Notifications peek (bell tab + header attention chip, MSIX identity for live events)
+- [x] M8 — Game strip (FPS / CPU / GPU / VRAM + temp / power over borderless games)
+- [ ] M9 — v1.0.0: Optional taskbar replacement
+
+[Download v1.0.0](https://github.com/A-y-u-s-h-9/MinePix/releases/tag/v1.0.0) — built from tag `v1.0.0`.
+
+## Install
+
+Two ways to run MinePix, both from the repo:
+
+### Option A — Setup.exe (simplest)
+
+Run **`MinePixSetup-1.0.0.exe`** (\`packaging/out/MinePixSetup-1.0.0.exe\` in a local build, or from the Releases page).
+It offers **current user** (%LocalAppData%, no admin) or **all users** (Program Files, elevated) at install time,
+creates a Start Menu shortcut, and can register autostart (default on; desktop shortcut is opt-in). Runs on
+Windows 10 & 11, x64.
+
+**Unsigned** — SmartScreen will warn on first launch: “More info → Run anyway”. That's the price of free & open.
+
+> Note: the unpackaged app shows the notification feed but cannot subscribe to **live notification-center pushes**
+> (that capability requires a package identity). Everything else works.
+
+### Option B — MSIX (live notifications)
+
+Live notification events (the island reacting the instant a toast arrives) require the MSIX identity:
+
+```powershell
+.\packaging\Build-Msix.ps1     # build + stage + pack + sign
+.\packaging\Install-Msix.ps1   # trust the dev cert (once, elevated) + side-load
+```
+
+Same features, plus live notifications. The MSIX is dev-signed (`CN=MinePix Dev`) for local testing — a Store
+identity replaces it for public distribution.
+
+### Uninstall
+
+Setup.exe → Settings → Apps → MinePix → Uninstall (also removes the autostart entry). For the MSIX: `Get-AppxPackage MinePix.App | Remove-AppxPackage`.
 
 ## Build
 
@@ -60,8 +93,11 @@ Requires the .NET 8 SDK:
 
 ```powershell
 dotnet build
-bin\Debug\net8.0-windows\MinePix.exe
+bin\Debug\net8.0-windows10.0.22621.0\MinePix.exe
 ```
+
+Packaging (optional): see `packaging\README.md` for the MSIX, and `packaging\MinePix.iss` for the installer
+(compile with Inno Setup 6: `ISCC.exe packaging\MinePix.iss`).
 
 Then hover the top-center pill. Exit via the tray icon or tray → Settings → Close.
 

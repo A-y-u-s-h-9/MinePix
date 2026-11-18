@@ -7,3 +7,4 @@ packaging/staging/
 packaging/*.msix
 packaging/*.cer
 packaging/*.appxblockmap
+packaging/out/

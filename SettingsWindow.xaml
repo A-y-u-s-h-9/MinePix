@@ -431,7 +431,7 @@
             <Border Style="{StaticResource SettingRow}">
               <StackPanel>
                 <TextBlock Text="MinePix — your top edge, doing things" Style="{StaticResource SettingLabel}" />
-                <TextBlock Text="A free, open-source Dynamic Island for Windows. Version 0.3.0" Style="{StaticResource SettingHint}" />
+                <TextBlock Text="A free, open-source Dynamic Island for Windows. Version 1.0.0" Style="{StaticResource SettingHint}" />
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                   <Button Style="{StaticResource FlatButton}" Content="Open settings folder" Click="OpenSettingsFolder_Click" />
                   <Button Style="{StaticResource FlatButton}" Content="View on GitHub" Margin="8,0,0,0" Click="OpenGitHub_Click" />
